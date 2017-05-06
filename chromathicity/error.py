@@ -9,5 +9,7 @@ def raise_not_implemented(obj, message: str):
     """
     raise NotImplementedError(
         f'{message} is not implemented for objects '
-        f'of class {type(obj).__name__}.'
+        f'of type {type(obj).__name__}.'
     )
+
+
