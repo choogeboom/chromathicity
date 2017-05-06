@@ -8,6 +8,7 @@ from chromathicity.chromadapt import (
 from chromathicity.illuminant import Illuminant, get_default_illuminant
 from chromathicity.rgbspec import (RgbSpecification,
                                    get_default_rgb_specification)
+from chromathicity.manage import color_conversion
 
 from chromathicity.observer import Observer, get_default_observer
 
@@ -97,6 +98,7 @@ def lab2xyz(lab: np.ndarray,
 
 
 # noinspection PyUnusedLocal
+@color_conversion('lab', 'xyzr')
 def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert LAB to normalized XYZ
@@ -144,6 +146,7 @@ def lrgb2lab(lrgb: np.ndarray,
 
 
 # noinspection PyUnusedLocal
+@color_conversion('lrgb', 'rgb')
 def lrgb2rgb(lrgb: np.ndarray,
              rgbs: RgbSpecification=None, **kwargs) -> np.ndarray:
     """
@@ -179,6 +182,7 @@ def lrgb2xyy(lrgb: np.ndarray,
     return xyz2xyy(xyz, axis, illuminant, observer)
 
 
+@color_conversion('lrgb', 'xyz')
 def lrgb2xyz(lrgb: np.ndarray,
              axis: int=None,
              illuminant: Illuminant=None,
@@ -452,18 +456,20 @@ def spectrum2xyy(spectrum: np.ndarray,
 
 
 # noinspection PyUnusedLocal
+@color_conversion('spectrum', 'xyz')
 def spectrum2xyz(spectrum: np.ndarray,
                  wavelengths: np.ndarray,
                  axis: int=None,
                  illuminant: Illuminant=get_default_illuminant(),
-                 observer: Observer=get_default_observer(), **kwargs) -> np.ndarray:
+                 observer: Observer=get_default_observer(),
+                 **kwargs) -> np.ndarray:
     """
     Convert reflectance spectrum to XYZ
     
     :param spectrum: the reflectance spectrum
     :param wavelengths: the wavelengths corresponding to the spectra
-    :param axis: The axis along which the spectra lie. If this is None, then the axis is the la
-                 last axis with a size that matches wavelengths.
+    :param axis: The axis along which the spectra lie. If this is None, 
+        then the axis is the last axis with a size that matches wavelengths. 
     :param illuminant: the illuminant
     :param observer: the observer
     :return: 

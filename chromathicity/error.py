@@ -13,3 +13,13 @@ def raise_not_implemented(obj, message: str):
     )
 
 
+class ChromathicityError(Exception):
+    """ Base class for color exceptions"""
+    pass
+
+
+class UndefinedConversionError(ChromathicityError):
+    """ Raised when a conversion is undefined """
+    pass
+
+
