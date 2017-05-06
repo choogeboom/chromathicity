@@ -17,86 +17,6 @@ LAB_EPS = 0.008856
 LAB_KAPPA = 903.3
 
 
-def lab2lrgb(lab: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None,
-             rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert LAB to linear RGB
-    
-    :param lab: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = lab2xyz(lab, axis, illuminant, observer)
-    return xyz2lrgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
-def lab2rgb(lab: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None,
-            rgbs: RgbSpecification=None,
-            caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert LAB to RGB
-    
-    :param lab: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = lab2xyz(lab, axis, illuminant, observer)
-    return xyz2rgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
-# noinspection PyUnusedLocal
-def lab2xyy(lab: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=get_default_illuminant(),
-            observer: Observer=get_default_observer(),
-            **kwargs) -> np.ndarray:
-    """
-    Convert LAB to xyY
-    
-    :param lab: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    xyz = lab2xyz(lab, axis, illuminant, observer)
-    return xyz2xyy(xyz, axis, illuminant, observer)
-
-
-# noinspection PyUnusedLocal
-def lab2xyz(lab: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None,
-            **kwargs) -> np.ndarray:
-    """
-    Convert LAB to XYZ
-    
-    :param lab: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    xyzr = lab2xyzr(lab, axis)
-    return xyzr2xyz(xyzr, axis, illuminant, observer)
-
-
 # noinspection PyUnusedLocal
 @color_conversion('lab', 'xyzr')
 def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
@@ -124,27 +44,6 @@ def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
     return xyzr
 
 
-def lrgb2lab(lrgb: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None,
-             rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert linear RGB to LAB
-    
-    :param lrgb: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = lrgb2xyz(lrgb, axis, illuminant, observer, rgbs, caa)
-    return xyz2lab(xyz, axis, illuminant, observer)
-
-
 # noinspection PyUnusedLocal
 @color_conversion('lrgb', 'rgb')
 def lrgb2rgb(lrgb: np.ndarray,
@@ -159,27 +58,6 @@ def lrgb2rgb(lrgb: np.ndarray,
     if rgbs is None:
         rgbs = get_default_rgb_specification()
     return rgbs.compand(lrgb)
-
-
-def lrgb2xyy(lrgb: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None,
-             rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert from linear RGB to xyY
-    
-    :param lrgb: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = lrgb2xyz(lrgb, axis, illuminant, observer, rgbs, caa)
-    return xyz2xyy(xyz, axis, illuminant, observer)
 
 
 @color_conversion('lrgb', 'xyz')
@@ -241,49 +119,8 @@ def lrgb2xyz(lrgb: np.ndarray,
         return xyz
 
 
-def lrgb2xyzr(lrgb: np.ndarray,
-              axis: int=None,
-              illuminant: Illuminant=None,
-              observer: Observer=None,
-              rgbs: RgbSpecification=None,
-              caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert from linear RGB to normalized XYZ
-    
-    :param lrgb: 
-    :param axis: 
-    :param illuminant:
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = lrgb2xyz(lrgb, axis, observer, rgbs, caa)
-    return xyz2xyzr(xyz, axis, illuminant, observer)
-
-
-def rgb2lab(rgb: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None,
-            rgbs: RgbSpecification=None,
-            caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert RGB to LAB
-    
-    :param rgb: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = rgb2xyz(rgb, axis, illuminant, observer, rgbs, caa)
-    return xyz2lab(xyz, axis, illuminant, observer)
-
-
 # noinspection PyUnusedLocal
+@color_conversion('rgb', 'lrgb')
 def rgb2lrgb(rgb: np.ndarray,
              rgbs: RgbSpecification=None, **kwargs) -> np.ndarray:
     """
@@ -296,163 +133,6 @@ def rgb2lrgb(rgb: np.ndarray,
     if rgbs is None:
         rgbs = get_default_rgb_specification()
     return rgbs.inverse_compand(rgb)
-
-
-def rgb2xyy(rgb: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None,
-            rgbs: RgbSpecification=None,
-            caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert companded RGB to xyY
-    
-    :param rgb: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = rgb2xyz(rgb, axis, illuminant, observer, rgbs, caa)
-    return xyz2xyy(xyz, axis, illuminant, observer)
-
-
-def rgb2xyz(rgb: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None,
-            rgbs: RgbSpecification=None,
-            caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert RGB to XYZ
-    
-    :param rgb: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    lrgb = rgb2lrgb(rgb, rgbs)
-    return lrgb2xyz(lrgb, axis, illuminant, observer, rgbs, caa)
-
-
-def rgb2xyzr(rgb: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None,
-             rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert RGB to normalized XYZ
-    
-    :param rgb: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = rgb2xyz(rgb, axis, illuminant, observer, rgbs, caa)
-    return xyz2xyzr(xyz, axis, illuminant, observer)
-
-
-# noinspection PyUnusedLocal
-def spectrum2lab(spectrum: np.ndarray,
-                 wavelengths: np.ndarray,
-                 axis: int=None,
-                 illuminant: Illuminant=None,
-                 observer: Observer=None, **kwargs) -> np.ndarray:
-    """
-    Convert reflectance spectra to LAB
-    
-    :param spectrum: 
-    :param wavelengths: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    if axis is None:
-        axis = get_matching_axis(spectrum.shape, wavelengths.size)
-    xyz = spectrum2xyz(spectrum, wavelengths, axis, illuminant, observer)
-    return xyz2lab(xyz, axis, illuminant, observer)
-
-
-def spectrum2lrgb(spectrum: np.ndarray,
-                  wavelengths: np.ndarray,
-                  axis: int=None,
-                  illuminant: Illuminant=None,
-                  observer: Observer=None,
-                  rgbs: RgbSpecification=None,
-                  caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert reflectance spectra to linear RGB
-    
-    :param spectrum: 
-    :param wavelengths: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs:
-    :param caa:
-    :return: 
-    """
-    if axis is None:
-        axis = get_matching_axis(spectrum.shape, wavelengths.size)
-    xyz = spectrum2xyz(spectrum, wavelengths, axis, illuminant, observer)
-    return xyz2lrgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
-def spectrum2rgb(spectrum: np.ndarray,
-                 wavelengths: np.ndarray,
-                 axis: int=None,
-                 illuminant: Illuminant=None,
-                 observer: Observer=None,
-                 rgbs: RgbSpecification=None,
-                 caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert reflectance spectra to companded RGB
-    
-    :param spectrum: 
-    :param wavelengths: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    if axis is None:
-        axis = get_matching_axis(spectrum.shape, wavelengths.size)
-    xyz = spectrum2xyz(spectrum, wavelengths, axis, illuminant, observer)
-    return xyz2rgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
-# noinspection PyUnusedLocal
-def spectrum2xyy(spectrum: np.ndarray,
-                 wavelengths: np.ndarray,
-                 axis: int=None,
-                 illuminant: Illuminant=None,
-                 observer: Observer=None, **kwargs) -> np.ndarray:
-    """
-    Convert reflectance spectra to xyY
-    
-    :param spectrum: 
-    :param wavelengths: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    if axis is None:
-        axis = get_matching_axis(spectrum.shape, wavelengths.size)
-    xyz = spectrum2xyz(spectrum, wavelengths, axis, illuminant, observer)
-    return xyz2xyy(xyz, axis, illuminant, observer)
 
 
 # noinspection PyUnusedLocal
@@ -510,89 +190,7 @@ def spectrum2xyz(spectrum: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-def spectrum2xyzr(spectrum: np.ndarray,
-                  wavelengths: np.ndarray,
-                  axis: int=None,
-                  illuminant: Illuminant=get_default_illuminant(),
-                  observer: Observer=get_default_observer(), **kwargs) -> np.ndarray:
-    """
-    convert from reflectance spectrum to normalized XYZ
-    :param spectrum: 
-    :param wavelengths: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    if axis is None:
-        axis = get_matching_axis(spectrum.shape, wavelengths.size)
-    xyz = spectrum2xyz(spectrum, wavelengths, axis, illuminant, observer)
-    return xyz2xyzr(xyz, axis, illuminant, observer)
-
-
-# noinspection PyUnusedLocal
-def xyy2lab(xyy: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None, **kwargs) -> np.ndarray:
-    """
-    Convert xyY to LAB
-    
-    :param xyy: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    xyz = xyy2xyz(xyy, axis)
-    return xyz2lab(xyz, axis, illuminant, observer)
-
-
-# noinspection PyUnusedLocal
-def xyy2lrgb(xyy: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None,
-             rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
-    """
-    Convert xyY to linear RGB
-    
-    :param xyy: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = xyy2xyz(xyy, axis)
-    return xyz2lrgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
-# noinspection PyUnusedLocal
-def xyy2rgb(xyy: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None,
-            rgbs: RgbSpecification=None,
-            caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
-    """
-    Convert xyY to RGB
-    
-    :param xyy: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = xyy2xyz(xyy, axis)
-    return xyz2rgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
-# noinspection PyUnusedLocal
+@color_conversion('xyy', 'xyz')
 def xyy2xyz(xyy, axis: int=None, **kwargs) -> np.ndarray:
     """
     converts from xyY to XYZ
@@ -619,44 +217,7 @@ def xyy2xyz(xyy, axis: int=None, **kwargs) -> np.ndarray:
     return xyz
 
 
-# noinspection PyUnusedLocal
-def xyy2xyzr(xyy: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None, **kwargs) -> np.ndarray:
-    """
-    Convert form xyY to normalized XYZ
-    
-    :param xyy: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    xyz = xyy2xyz(xyy, axis)
-    return xyz2xyzr(xyz, axis, illuminant, observer)
-
-
-# noinspection PyUnusedLocal
-def xyz2lab(xyz: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=get_default_illuminant(),
-            observer: Observer=get_default_observer(), **kwargs) -> np.ndarray:
-    """
-    Convert from XYZ to LAB
-    
-    :param xyz: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    if axis is None:
-        axis = get_matching_axis(xyz.shape, 3)
-    xyzr = xyz2xyzr(xyz, axis, illuminant, observer)
-    return xyzr2lab(xyzr, axis)
-
-
+@color_conversion('xyz', 'lrgb')
 def xyz2lrgb(xyz: np.ndarray,
              axis: int=None,
              illuminant: Illuminant=None,
@@ -685,7 +246,8 @@ def xyz2lrgb(xyz: np.ndarray,
     if caa is None:
         caa = get_default_chromatic_adaptation_algorithm()
 
-    # If the white points are not equal, we will need to convert to the RGB white point
+    # If the white points are not equal, we will need to convert to the
+    # RGB white point
     source_white_point = illuminant.get_white_point(observer)
     destination_white_point = rgbs.white_point
     if not np.allclose(source_white_point, destination_white_point,
@@ -716,28 +278,8 @@ def xyz2lrgb(xyz: np.ndarray,
     return lrgb.transpose(new_dims)
 
 
-def xyz2rgb(xyz: np.ndarray,
-            axis: int=None,
-            illuminant: Illuminant=None,
-            observer: Observer=None,
-            rgbs: RgbSpecification=None,
-            caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert XZY to Companded RGB
-    
-    :param xyz: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    lrgb = xyz2lrgb(xyz, axis, illuminant, observer, rgbs, caa)
-    return lrgb2rgb(lrgb, rgbs)
-
-
 # noinspection PyUnusedLocal
+@color_conversion('xyz', 'xyy')
 def xyz2xyy(xyz: np.ndarray,
             axis: int=None,
             illuminant: Illuminant=None,
@@ -767,10 +309,12 @@ def xyz2xyy(xyz: np.ndarray,
     xyy[inds[1]][nzd] = xyz[inds[1]][nzd] / denominator[nzd]
     xyy[inds[2]] = xyz[inds[1]]
     if not np.all(nzd):
-        # For any point that is pure black (X=Y=Z=0), give it the chromaticity of the
-        # white point of the specified illuminant and observer.
+        # For any point that is pure black (X=Y=Z=0), give it the
+        # chromaticity of the white point of the specified illuminant and
+        # observer.
         white_point = illuminant.get_white_point(observer)
-        # to prevent infinite recursion, ensure that the white point is non-black
+        # to prevent infinite recursion, ensure that the white point is
+        # non-black
         if white_point[1] > 0:
             zd = np.logical_not(nzd)
             white_point_xyy = xyz2xyy(white_point, None, illuminant, observer)
@@ -828,6 +372,7 @@ def xyz2xyz(source_xyz: np.ndarray,
 
 
 # noinspection PyUnusedLocal
+@color_conversion('xyz', 'xyzr')
 def xyz2xyzr(xyz: np.ndarray,
              axis: int=None,
              illuminant: Illuminant=get_default_illuminant(),
@@ -850,6 +395,7 @@ def xyz2xyzr(xyz: np.ndarray,
 
 
 # noinspection PyUnusedLocal
+@color_conversion('xyzr', 'lab')
 def xyzr2lab(xyzr: np.ndarray,
              axis: int=None, **kwargs) -> np.ndarray:
     """
@@ -877,67 +423,8 @@ def xyzr2lab(xyzr: np.ndarray,
     return lab
 
 
-def xyzr2lrgb(xyzr: np.ndarray,
-              axis: int=None,
-              illuminant: Illuminant=None,
-              observer: Observer=None,
-              rgbs: RgbSpecification=None,
-              caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert normalized XYZ to linear RGB
-    
-    :param xyzr: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = xyzr2xyz(xyzr, axis, illuminant, observer)
-    return xyz2lrgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
-def xyzr2rgb(xyzr: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None,
-             rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
-    """
-    Convert normalized XYZ to RGB
-    
-    :param xyzr: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :param rgbs: 
-    :param caa: 
-    :return: 
-    """
-    xyz = xyzr2xyz(xyzr, axis, illuminant, observer)
-    return xyz2rgb(xyz, axis, illuminant, observer, rgbs, caa)
-
-
 # noinspection PyUnusedLocal
-def xyzr2xyy(xyzr: np.ndarray,
-             axis: int=None,
-             illuminant: Illuminant=None,
-             observer: Observer=None, **kwargs) -> np.ndarray:
-    """
-    Convert normalized XYZ to xyY
-    
-    :param xyzr: 
-    :param axis: 
-    :param illuminant: 
-    :param observer: 
-    :return: 
-    """
-    xyz = xyzr2xyz(xyzr, axis, illuminant, observer)
-    return xyz2xyy(xyz, axis, illuminant, observer)
-
-
-# noinspection PyUnusedLocal
+@color_conversion('xyzr', 'xyz')
 def xyzr2xyz(xyzr: np.ndarray,
              axis: int=None,
              illuminant: Illuminant=None,
