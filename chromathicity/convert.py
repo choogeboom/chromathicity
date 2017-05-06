@@ -487,8 +487,8 @@ def _construct_component_inds(axis: int,
         for i in range(n_components))
 
 
-def convert(from_space: str, to_space: str, data: np.ndarray,
-            *args, **kwargs) -> np.ndarray:
+def convert(data: np.ndarray, from_space: str, to_space: str, *args,
+            **kwargs) -> np.ndarray:
     """ Convert data between spaces """
     conversion_path = get_conversion_path(from_space, to_space)
     for do_conversion_step in conversion_path:
