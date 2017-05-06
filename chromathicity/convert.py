@@ -8,7 +8,7 @@ from chromathicity.chromadapt import (
 from chromathicity.illuminant import Illuminant, get_default_illuminant
 from chromathicity.rgbspec import (RgbSpecification,
                                    get_default_rgb_specification)
-from chromathicity.manage import color_conversion
+from chromathicity.manage import color_conversion, get_conversion_path
 
 from chromathicity.observer import Observer, get_default_observer
 
@@ -468,7 +468,9 @@ def get_matching_axis(shape: Tuple, length: int) -> int:
     return axis_candidates[-1]
 
 
-def _construct_component_inds(axis, n_dims, n_components):
+def _construct_component_inds(axis: int,
+                              n_dims: int,
+                              n_components: int) -> Tuple[Tuple]:
     """
     Construct a tuple of tuples, where each element extracts the correct 
     component values.
@@ -483,3 +485,12 @@ def _construct_component_inds(axis, n_dims, n_components):
         tuple(slice(i, i+1) if dim == axis else (slice(None) if dim < n_dims else np.newaxis)
               for dim in range(max(n_dims, 2)))
         for i in range(n_components))
+
+
+def convert(from_space: str, to_space: str, data: np.ndarray,
+            *args, **kwargs) -> np.ndarray:
+    """ Convert data between spaces """
+    conversion_path = get_conversion_path(from_space, to_space)
+    for do_conversion_step in conversion_path:
+        data = do_conversion_step(data, *args, **kwargs)
+    return data

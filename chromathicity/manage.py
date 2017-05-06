@@ -1,5 +1,5 @@
 """
-The code in this module was taken and modified from the python-colormath 
+Much of the code in this module was taken and modified from the python-colormath 
 package, which is located at 
 
     https://github.com/gtaylor/python-colormath
@@ -137,3 +137,8 @@ def color_conversion(start_type, target_type):
         return f
 
     return decorator
+
+
+def get_conversion_path(from_space, to_space):
+    """ Returns a list of functions to apply to perform the conversion """
+    return _conversion_manager.get_conversion_path(from_space, to_space)
