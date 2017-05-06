@@ -1,2 +1,7 @@
 .idea
 __pycache__
+chromathicity.egg-info
+dist
+*.pyc
+build
+build_and_upload.sh
