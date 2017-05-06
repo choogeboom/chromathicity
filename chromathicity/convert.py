@@ -114,7 +114,8 @@ def lrgb2xyz(lrgb: np.ndarray,
     destination_white_point = illuminant.get_white_point(observer)
     if not np.allclose(source_white_point, destination_white_point,
                        rtol=1e-5, atol=1e-14):
-        return xyz2xyz(xyz, source_white_point, destination_white_point, axis, caa)
+        return xyz2xyz(xyz, source_white_point, destination_white_point, axis,
+                       caa)
     else:
         return xyz
 
@@ -208,7 +209,7 @@ def xyy2xyz(xyy, axis: int=None, **kwargs) -> np.ndarray:
     nzy = np.nonzero(xyy[inds[1]])
     xyz = np.zeros(xyy.shape)
 
-    xyz[inds[0]][nzy] = xyy[inds[0]][nzy] * xyy[inds[2]][nzy] / xyy[inds[1]][nzy]
+    xyz[inds[0]][nzy] = xyy[inds[0]][nzy]*xyy[inds[2]][nzy] / xyy[inds[1]][nzy]
     xyz[inds[1]][nzy] = xyy[inds[2]][nzy]
     xyz[inds[2]][nzy] = (
         (1 - xyy[inds[0]][nzy] - xyy[inds[1]][nzy]) * xyy[inds[2]][nzy]
@@ -252,7 +253,8 @@ def xyz2lrgb(xyz: np.ndarray,
     destination_white_point = rgbs.white_point
     if not np.allclose(source_white_point, destination_white_point,
                        rtol=1e-5, atol=1e-14):
-        xyz = xyz2xyz(xyz, source_white_point, destination_white_point, axis, caa)
+        xyz = xyz2xyz(xyz, source_white_point, destination_white_point, axis,
+                      caa)
 
     # Get the XYZ values into the correct shape for matrix multiplication
     n_dims = xyz.ndim
@@ -447,7 +449,8 @@ def xyzr2xyz(xyzr: np.ndarray,
     if observer is None:
         observer = get_default_observer()
 
-    new_shape = tuple(-1 if dim == axis else 1 for dim in range(len(xyzr.shape)))
+    new_shape = tuple(-1 if dim == axis else 1
+                      for dim in range(len(xyzr.shape)))
     white_point = illuminant.get_white_point(observer).reshape(new_shape)
     return xyzr * white_point
 
@@ -458,7 +461,8 @@ def get_matching_axis(shape: Tuple, length: int) -> int:
     
     :param shape: the shape of the input
     :param length: the desired length of the axis
-    :return: the correct axis. If multiple axes match, then it returns the last one.
+    :return: the correct axis. If multiple axes match, then it returns the last 
+             one.
     """
     # noinspection PyUnresolvedReferences
     axis_candidates = np.nonzero(np.array(shape) == length)[0]
@@ -482,7 +486,9 @@ def _construct_component_inds(axis: int,
     """
     # noinspection PyTypeChecker
     return tuple(
-        tuple(slice(i, i+1) if dim == axis else (slice(None) if dim < n_dims else np.newaxis)
+        tuple(slice(i, i+1)
+              if dim == axis
+              else (slice(None) if dim < n_dims else np.newaxis)
               for dim in range(max(n_dims, 2)))
         for i in range(n_components))
 
