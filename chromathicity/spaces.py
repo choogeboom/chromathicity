@@ -376,6 +376,32 @@ class XyzData(WhitePointSensitive):
     pass
 
 
+@color_space('xyy')
+class XyyData(WhitePointSensitive):
+    """
+    Represents data from the CIE xyY color space
+    
+    From `Wikipedia <https://en.wikipedia.org/wiki/CIE_1931_color_space#
+    CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space>`_
+    
+        Since the human eye has three types of color sensors that respond to 
+        different ranges of wavelengths, a full plot of all visible colors is 
+        a three-dimensional figure. However, the concept of color can be 
+        divided into two parts: brightness and chromaticity. For example, 
+        the color white is a bright color, while the color grey is considered 
+        to be a less bright version of that same white. In other words, 
+        the chromaticity of white and grey are the same while their 
+        brightness differs. 
+
+        The CIE XYZ color space was deliberately designed so that the Y 
+        parameter is a measure of the luminance of a color. The chromaticity 
+        of a color is then specified by the two derived parameters x and y, 
+        two of the three normalized values being functions of all three 
+        tristimulus values X, Y, and Z.
+    """
+    pass
+
+
 @color_space('xyzr')
 class NormalizedXyzData(WhitePointSensitive):
     """

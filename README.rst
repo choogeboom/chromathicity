@@ -1,4 +1,4 @@
 =============
 chromathicity
 =============
-customizable color space conversions
+extensible color space conversions
