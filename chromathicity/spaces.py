@@ -190,7 +190,7 @@ class ColorSpaceDataImpl(ColorSpaceData):
     def __repr__(self):
         kwarg_repr = ', '.join(f'{key!s}={value!r}'
                                for key, value in self._get_kwargs().items())
-        return f'{type(self).__name__}({self.data!r}, {kwarg_repr}'
+        return f'{type(self).__name__}({self.data!r}, {kwarg_repr})'
 
     @property
     def components(self):
