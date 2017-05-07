@@ -301,6 +301,13 @@ class SpectralData(ColorSpaceDataImpl):
 
 # noinspection PyMethodOverriding
 class WhitePointSensitive(ColorSpaceDataImpl):
+    """
+    This class implements automatic chromatic adaptation whenever the white 
+    point of the illuminant/observer combination changes.
+    
+    Any subclass representing a space that is sensitive to the white point of 
+    the illuminant/observer combination should inherit from this class.
+    """
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -314,6 +321,13 @@ class WhitePointSensitive(ColorSpaceDataImpl):
         self.change_white_point(self._illuminant, obs)
 
     def change_white_point(self, illuminant: Illuminant, observer: Observer):
+        source_white_point = self._illuminant.get_white_point(self._observer)
+        destination_white_point = illuminant.get_white_point(observer)
+        if np.allclose(source_white_point, destination_white_point):
+            self._illuminant = illuminant
+            self._observer = observer
+            return
+
         source_xyz = convert(self._data,
                              from_space=self.__spacename__,
                              to_space='xyz',
@@ -321,8 +335,6 @@ class WhitePointSensitive(ColorSpaceDataImpl):
                              observer=observer,
                              rgbs=self._rgbs,
                              caa=self._caa)
-        source_white_point = self._illuminant.get_white_point(self._observer)
-        destination_white_point = illuminant.get_white_point(observer)
         dest_xyz = xyz2xyz(source_xyz,
                            source_white_point=source_white_point,
                            destination_white_point=destination_white_point,
@@ -341,6 +353,24 @@ class WhitePointSensitive(ColorSpaceDataImpl):
 
 @color_space('xyz')
 class XyzData(WhitePointSensitive):
+    """
+    From https://en.wikipedia.org/wiki/CIE_1931_color_space
+    
+        The CIE 1931 color spaces were the first defined quantitative links 
+        between physical pure colors (i.e. wavelengths) in the 
+        electromagnetic visible spectrum, and physiological perceived colors 
+        in human color vision. The mathematical relationships that define 
+        these color spaces are essential tools for color management, 
+        important when dealing with color inks, illuminated displays, 
+        and recording devices such as digital cameras. 
+    
+        The CIE 1931 RGB color space and CIE 1931 XYZ color space were 
+        created by the International Commission on Illumination (CIE) in 
+        1931. They resulted from a series of experiments done in the late 
+        1920s by William David Wright[3] and John Guild. The experimental 
+        results were combined into the specification of the CIE RGB color 
+        space, from which the CIE XYZ color space was derived. 
+    """
     pass
 
 
