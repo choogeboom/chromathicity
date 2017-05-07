@@ -354,39 +354,69 @@ class WhitePointSensitive(ColorSpaceDataImpl):
 @color_space('xyz')
 class XyzData(WhitePointSensitive):
     """
-    From https://en.wikipedia.org/wiki/CIE_1931_color_space
+    Represents data from the CIE XYZ color space. 
     
-        The CIE 1931 color spaces were the first defined quantitative links 
+    From `Wikipedia <https://en.wikipedia.org/wiki/CIE_1931_color_space>`_:
+    
+        *The CIE 1931 color spaces were the first defined quantitative links 
         between physical pure colors (i.e. wavelengths) in the 
         electromagnetic visible spectrum, and physiological perceived colors 
         in human color vision. The mathematical relationships that define 
         these color spaces are essential tools for color management, 
         important when dealing with color inks, illuminated displays, 
-        and recording devices such as digital cameras. 
+        and recording devices such as digital cameras.*
     
-        The CIE 1931 RGB color space and CIE 1931 XYZ color space were 
+        *The CIE 1931 RGB color space and CIE 1931 XYZ color space were 
         created by the International Commission on Illumination (CIE) in 
         1931. They resulted from a series of experiments done in the late 
-        1920s by William David Wright[3] and John Guild. The experimental 
+        1920s by William David Wright and John Guild. The experimental 
         results were combined into the specification of the CIE RGB color 
-        space, from which the CIE XYZ color space was derived. 
+        space, from which the CIE XYZ color space was derived.* 
     """
     pass
 
 
 @color_space('xyzr')
 class NormalizedXyzData(WhitePointSensitive):
+    """
+    This space is the CIE XYZ space, normalized by the white point
+    """
     pass
 
 
 @color_space('lab')
 class LabData(WhitePointSensitive):
+    """
+    Represents the CIE L*a*b* color space.
+    
+    From `Wikipedia <https://en.wikipedia.org/wiki/Lab_color_space#CIELAB>`_:
+    
+        *CIE L\*a\*b\* (CIELAB) is a color space specified by the International 
+        Commission on Illumination (French Commission internationale de 
+        l'éclairage, hence its CIE initialism). It describes all the colors 
+        visible to the human eye and was created to serve as a 
+        device-independent model to be used as a reference.* 
+
+        *The three coordinates of CIELAB represent the lightness of the color 
+        (L\* = 0 yields black and L\* = 100 indicates diffuse white; specular 
+        white may be higher), its position between red/magenta and green (a\*, 
+        negative values indicate green while positive values indicate 
+        magenta) and its position between yellow and blue (b\*, negative 
+        values indicate blue and positive values indicate yellow). The 
+        asterisk (\*) after L, a and b are pronounced* star *and are part of the 
+        full name, since they represent L\*, a\* and b\*, to distinguish them 
+        from Hunter's L, a, and b.*
+    """
     pass
 
 
 # noinspection PyMethodOverriding
 class RgbsSensitive(WhitePointSensitive):
-
+    """
+    This class represents spaces that are sensitive to the choice of the 
+    `RgbSpecification`, and will adapt the color data if the 
+    `rgbs`:instance_attribute property changes 
+    """
     @WhitePointSensitive.rgbs.setter
     def rgbs(self, r: RgbSpecification):
         self.change_rgbs(r, self._caa)
@@ -429,6 +459,3 @@ class RgbData(RgbsSensitive):
 @color_space('xyy')
 class XyyData(WhitePointSensitive):
     pass
-
-
-
