@@ -45,6 +45,57 @@ def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
+@color_conversion('lab', 'lch')
+def lab2lch(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
+    """
+    Convert L*a*b* to LCh
+    
+    :param lab: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(lab.shape, 3)
+
+    inds = construct_component_inds(axis, lab.ndim, 3)
+
+    lch = np.zeros(lab.shape)
+
+    lch[inds[0]] = lab[inds[0]]
+    lch[inds[1]] = np.sqrt(lab[inds[1]]**2 + lab[inds[2]]**2)
+    lch[inds[2]] = np.mod((180/np.pi)*np.arctan2(lab[inds[2]], lab[inds[1]]),
+                          360.)
+
+    return lch
+
+
+# noinspection PyUnusedLocal
+@color_conversion('lch', 'lab')
+def lch2lab(lch: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
+    """
+    Converts LCh to L*a*b*
+    
+    :param lch: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(lch.shape, 3)
+
+    inds = construct_component_inds(axis, lch.ndim, 3)
+
+    lab = np.zeros(lch.shape)
+    lab[inds[0]] = lch[inds[0]]
+    h_rad = (np.pi/180)*lch[inds[2]]
+    lab[inds[1]] = lch[inds[1]]*np.cos(h_rad)
+    lab[inds[2]] = lch[inds[1]]*np.sin(h_rad)
+
+    return lab
+
+
+# noinspection PyUnusedLocal
 @color_conversion('lrgb', 'rgb')
 def lrgb2rgb(lrgb: np.ndarray,
              rgbs: RgbSpecification=None, **kwargs) -> np.ndarray:

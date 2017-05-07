@@ -436,6 +436,23 @@ class LabData(WhitePointSensitive):
     pass
 
 
+@color_space('lch')
+class LchData(WhitePointSensitive):
+    """
+    Represents the CIELCh color space.
+     
+    From `Wikipedia <https://en.wikipedia.org/wiki/Lab_color_space#
+    Cylindrical_representation:_CIELCh_or_CIEHLC>`_:
+    
+        The CIELCh color space is a CIELab cube color space, where instead of 
+        Cartesian coordinates a*, b*, the cylindrical coordinates C* (chroma, 
+        relative saturation) and h° (hue angle, angle of the hue in the 
+        CIELab color wheel) are specified. The CIELab lightness L* remains 
+        unchanged. 
+    """
+    pass
+
+
 # noinspection PyMethodOverriding
 class RgbsSensitive(WhitePointSensitive):
     """
