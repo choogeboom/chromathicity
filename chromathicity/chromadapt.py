@@ -9,6 +9,9 @@ class ChromaticAdaptationAlgorithm(ABC):
     between white points. 
     """
 
+    def __repr__(self):
+        return f'{type(self).__name__}()'
+
     def get_linear_transformation(self, white_point_from, white_point_to):
         m_a = self.cone_response_domain
         cone_response_from = white_point_from.reshape((1, 3)).dot(m_a).reshape(-1)
