@@ -30,7 +30,7 @@ def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
     if axis is None:
         axis = get_matching_axis(lab.shape, 3)
 
-    inds = _construct_component_inds(axis, len(lab.shape), 3)
+    inds = construct_component_inds(axis, len(lab.shape), 3)
     fxyz = np.zeros(lab.shape)
     fxyz[inds[1]] = (lab[inds[0]] + 16) / 116
     fxyz[inds[0]] = lab[inds[1]]/500 + fxyz[inds[1]]
@@ -203,7 +203,7 @@ def xyy2xyz(xyy, axis: int=None, **kwargs) -> np.ndarray:
     if axis is None:
         axis = get_matching_axis(xyy.shape, 3)
 
-    inds = _construct_component_inds(axis, len(xyy.shape), 3)
+    inds = construct_component_inds(axis, len(xyy.shape), 3)
 
     # Determine where y iz 0 so we don't divide by it
     nzy = np.nonzero(xyy[inds[1]])
@@ -301,7 +301,7 @@ def xyz2xyy(xyz: np.ndarray,
         illuminant = get_default_illuminant()
     if observer is None:
         observer = get_default_observer()
-    inds = _construct_component_inds(axis, xyz.ndim, 3)
+    inds = construct_component_inds(axis, xyz.ndim, 3)
 
     denominator = np.sum(xyz, axis)
     nzd = np.nonzero(denominator)
@@ -363,12 +363,9 @@ def xyz2xyz(source_xyz: np.ndarray,
     m = caa.get_linear_transformation(source_white_point,
                                       destination_white_point)
     destination_xyz = source_xyz.dot(m)
-    print(destination_xyz)
     # Now convert the shape back to the original
     if xyz_is_not_matrix:
-        print('reshaping')
         destination_xyz = destination_xyz.reshape(input_shape)
-        print(destination_xyz)
 
     return destination_xyz.transpose(new_dims)
 
@@ -418,7 +415,7 @@ def xyzr2lab(xyzr: np.ndarray,
 
     lab = np.zeros(xyzr.shape)
     # Construct the indices for the 3 components
-    inds = _construct_component_inds(axis, len(xyzr.shape), 3)
+    inds = construct_component_inds(axis, len(xyzr.shape), 3)
     lab[inds[0]] = 116*fxyz[inds[1]] - 16
     lab[inds[1]] = 500*(fxyz[inds[0]] - fxyz[inds[1]])
     lab[inds[2]] = 200*(fxyz[inds[1]] - fxyz[inds[2]])
@@ -472,9 +469,9 @@ def get_matching_axis(shape: Tuple, length: int) -> int:
     return axis_candidates[-1]
 
 
-def _construct_component_inds(axis: int,
-                              n_dims: int,
-                              n_components: int) -> Tuple[Tuple]:
+def construct_component_inds(axis: int,
+                             n_dims: int,
+                             n_components: int) -> Tuple[Tuple]:
     """
     Construct a tuple of tuples, where each element extracts the correct 
     component values.
