@@ -78,10 +78,10 @@ class RgbSpecification(ABC):
         transpose of the one on the website
         :return: 
         """
-        # import the xyy2xyz function here to avoid circular imports
-        from chromathicity import xyy2xyz
+        # import the convert function here to avoid circular imports
+        from chromathicity.convert import convert
         wp = self.white_point
-        xyz = xyy2xyz(self.xyy, axis=1)
+        xyz = convert(self.xyy, 'xyy', 'xyz', axis=1)
         xyz_normalized = xyz / xyz[:, 1:2]
         s = np.linalg.solve(xyz_normalized.T, wp[:, np.newaxis])
         return s * xyz_normalized
@@ -98,6 +98,11 @@ class Custom(RgbSpecification, SetGet):
                               [0.3, 0.6, 80.0],
                               [0.2, 0.1, 10.0]])
         self.set(**kwargs)
+
+    def __repr__(self):
+        args = ['name', 'illuminant', 'observer', 'xyy']
+        kwargs_repr = ', '.join(f'{key}={getattr(self, key)!r}' for key in args)
+        return f'Custom({kwargs_repr!s})'
 
     @property
     def name(self):
@@ -138,6 +143,9 @@ class Srgb(RgbSpecification):
         super().__init__()
         self.compander = SrgbCompander()
 
+    def __repr__(self):
+        return 'Srgb()'
+
     @property
     def name(self):
         return 'sRGB'
@@ -176,6 +184,9 @@ class SrgbCompander(Compander):
     _GAMMA = 2.4
     _BETA = 0.055
 
+    def __repr__(self):
+        return 'SrgbCompander()'
+
     def compand(self, linear_rgb: np.ndarray) -> np.ndarray:
         is_small = linear_rgb <= self._EPS
         is_big = np.logical_not(is_small)
@@ -203,6 +214,9 @@ class GammaCompander(Compander):
 
     def __init__(self, gamma=1):
         self.gamma = gamma
+
+    def __repr__(self):
+        return f'GammaCompander({self.gamma!r})'
 
     def compand(self, linear_rgb: np.ndarray) -> np.ndarray:
         return linear_rgb ** (1.0 / self.gamma)
