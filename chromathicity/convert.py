@@ -45,8 +45,8 @@ def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('lab', 'lch')
-def lab2lch(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
+@color_conversion('lab', 'lchab')
+def lab2lchab(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert L*a*b* to LCh
     
@@ -71,8 +71,8 @@ def lab2lch(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('lch', 'lab')
-def lch2lab(lch: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
+@color_conversion('lchab', 'lab')
+def lchab2lab(lch: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
     """
     Converts LCh to L*a*b*
     
@@ -185,6 +185,122 @@ def rgb2lrgb(rgb: np.ndarray,
     if rgbs is None:
         rgbs = get_default_rgb_specification()
     return rgbs.inverse_compand(rgb)
+
+
+@color_conversion('rgb', 'hsl')
+def rgb2hsl(rgb: np.ndarray,
+            axis: int=None,
+            **kwargs) -> np.ndarray:
+    """
+    Convert RGB to Hue Saturation Lightness
+    :param rgb: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(rgb.shape, 3)
+    big_m = np.max(rgb, axis=axis, keepdims=True)
+    little_m = np.min(rgb, axis=axis, keepdims=True)
+
+    inds = construct_component_inds(axis, rgb.ndim, 3)
+
+    hsl = np.zeros(rgb.shape)
+    hsl[inds[0]] = _compute_rgb_hue(rgb, big_m, little_m, axis)
+    l = 0.5 * (big_m + little_m)
+    hsl[inds[2]] = l
+
+    l_lt_one = l < 1.
+    hsl[inds[1]][l_lt_one] = (
+        (big_m[l_lt_one] - little_m[l_lt_one])
+        / (1. - np.abs(2*l[l_lt_one] - 1)))
+
+    return hsl
+
+
+@color_conversion('hsl', 'rgb')
+def hsl2rgb(hsl: np.ndarray,
+            axis: int=None,
+            **kwargs) -> np.ndarray:
+    """
+    Convert from Hue Saturation Lightness (HSL) to RGB
+    
+    :type hsl: np.ndarray
+    :param hsl: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(hsl.shape, 3)
+
+    inds = construct_component_inds(axis, hsl.ndim, 3)
+
+    chroma = (1. - np.abs(2.*hsl[inds[2]] - 1.)) * hsl[inds[1]]
+
+    h_prime = hsl[inds[0]] / 60.
+    x = chroma * (1 - np.abs(np.mod(h_prime, 2) - 1))
+    rgb1 = np.zeros(hsl.shape)
+    i01 = np.logical_and(0. <= h_prime, h_prime <= 1.)
+    i12 = np.logical_and(1. <= h_prime, h_prime <= 2.)
+    i23 = np.logical_and(2. <= h_prime, h_prime <= 3.)
+    i34 = np.logical_and(3. <= h_prime, h_prime <= 4.)
+    i45 = np.logical_and(4. <= h_prime, h_prime <= 5.)
+    i56 = np.logical_and(5. <= h_prime, h_prime <= 6.)
+    or_ = np.logical_or
+    rgb1[inds[0]][or_(i01, i56)] = chroma[or_(i01, i56)]
+    rgb1[inds[0]][or_(i12, i45)] = x[or_(i12, i45)]
+    rgb1[inds[1]][or_(i01, i34)] = x[or_(i01, i34)]
+    rgb1[inds[1]][or_(i12, i23)] = chroma[or_(i12, i23)]
+    rgb1[inds[2]][or_(i23, i56)] = x[or_(i23, i56)]
+    rgb1[inds[2]][or_(i34, i45)] = chroma[or_(i34, i45)]
+
+    little_m = hsl[inds[2]] - chroma/2.
+    if little_m.ndim > rgb1.ndim:
+        # This only happens if hsl is 1-D
+        return rgb1 + little_m[0]
+    else:
+        return rgb1 + little_m
+
+
+@color_conversion('rgb', 'hsi')
+def rgb2hsi(rgb: np.ndarray,
+            axis: int=None,
+            **kwargs) -> np.ndarray:
+    """
+    Convert RGB to Hue Saturation Intensity
+    :param rgb: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    pass
+
+
+def _compute_rgb_hue(rgb: np.ndarray, big_m, little_m, axis: int) -> np.ndarray:
+    """ Compute the RGB Hue. This is the same for HSV and HSL """
+    chroma = big_m - little_m
+    inds = construct_component_inds(axis, rgb.ndim, 3)
+    r = rgb[inds[0]]
+    g = rgb[inds[1]]
+    b = rgb[inds[2]]
+    if chroma.ndim < r.ndim:
+        # this will only happen when chroma is 1-D
+        chroma = chroma[(slice(None), np.newaxis)]
+    ch_is_nz = chroma != 0.
+    m_is_r = np.logical_and(big_m == r, ch_is_nz)
+    m_is_g = np.logical_and(big_m == g, ch_is_nz)
+    m_is_b = np.logical_and(big_m == b, ch_is_nz)
+
+    h_prime = np.zeros(r.shape)
+    if np.any(m_is_r):
+        h_prime[m_is_r] = np.mod((g[m_is_r] - b[m_is_r]) / chroma[m_is_r] + 6.,
+                                 6.)
+    if np.any(m_is_g):
+        h_prime[m_is_g] = (b[m_is_g] - r[m_is_g]) / chroma[m_is_g] + 2.
+    if np.any(m_is_b):
+        h_prime[m_is_b] = (r[m_is_b] - g[m_is_b]) / chroma[m_is_b] + 4.
+    return 60. * h_prime
 
 
 # noinspection PyUnusedLocal

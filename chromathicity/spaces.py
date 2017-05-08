@@ -436,10 +436,10 @@ class LabData(WhitePointSensitive):
     pass
 
 
-@color_space('lch')
-class LchData(WhitePointSensitive):
+@color_space('lchab')
+class LchabData(WhitePointSensitive):
     """
-    Represents the CIELCh color space.
+    Represents the CIELCh_ab color space.
      
     From `Wikipedia <https://en.wikipedia.org/wiki/Lab_color_space#
     Cylindrical_representation:_CIELCh_or_CIEHLC>`_:
@@ -496,6 +496,11 @@ class LinearRgbData(RgbsSensitive):
 
 @color_space('rgb')
 class RgbData(RgbsSensitive):
+    pass
+
+
+@color_space('hsl')
+class HslData(RgbsSensitive):
     pass
 
 
