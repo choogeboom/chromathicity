@@ -504,6 +504,11 @@ class HslData(RgbsSensitive):
     pass
 
 
+@color_space('hsi')
+class HsiData(RgbsSensitive):
+    pass
+
+
 @color_space('xyy')
 class XyyData(WhitePointSensitive):
     pass
