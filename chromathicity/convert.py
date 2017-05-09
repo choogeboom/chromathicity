@@ -288,6 +288,7 @@ def rgb2hsi(rgb: np.ndarray,
     return hsi
 
 
+# noinspection PyUnusedLocal
 @color_conversion('hsi', 'rgb')
 def hsi2rgb(hsi: np.ndarray,
             axis: int=None,
@@ -297,7 +298,6 @@ def hsi2rgb(hsi: np.ndarray,
     
     :param hsi: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -310,7 +310,7 @@ def hsi2rgb(hsi: np.ndarray,
     chroma = 3*hsi[inds[2]]*hsi[inds[1]]/(1 + z)  # type: np.ndarray
     x = chroma * z
     rgb1 = _compute_rgb1(hsi.shape, inds, h_prime, x, chroma)
-    little_m = hsi[inds[2]] * (1 - hsi[inds[1]])
+    little_m = hsi[inds[2]] * (1 - hsi[inds[1]])  # type: np.ndarray
     if little_m.ndim > rgb1.ndim:
         # This only happens in the 1D case
         return rgb1 + little_m[0]
@@ -530,8 +530,8 @@ def xyz2xyy(xyz: np.ndarray,
         observer = get_default_observer()
     inds = construct_component_inds(axis, xyz.ndim, 3)
 
-    denominator = np.sum(xyz, axis)
-    nzd = np.nonzero(denominator)
+    denominator = np.sum(xyz, axis, keepdims=True)
+    nzd = denominator != 0
 
     xyy = np.zeros(xyz.shape)
     xyy[inds[0]][nzd] = xyz[inds[0]][nzd] / denominator[nzd]
@@ -547,8 +547,8 @@ def xyz2xyy(xyz: np.ndarray,
         if white_point[1] > 0:
             zd = np.logical_not(nzd)
             white_point_xyy = xyz2xyy(white_point, None, illuminant, observer)
-            xyy[0][zd] = white_point_xyy[0]
-            xyy[1][zd] = white_point_xyy[1]
+            xyy[inds[0]][zd] = white_point_xyy[0]
+            xyy[inds[1]][zd] = white_point_xyy[1]
     return xyy
 
 
