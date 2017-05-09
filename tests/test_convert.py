@@ -121,7 +121,7 @@ class TestXyz:
         obs = Standard()
         xyz = 0.5 * ill.get_white_point(obs)
         expected_xyzr = 0.5 * np.ones((3,))
-        actual_xyzr = convert.xyz2xyzr(xyz, None, illuminant=ill, observer=obs)
+        actual_xyzr = convert.xyz2xyzr(xyz, illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_xyzr, expected_xyzr, rtol=1e-5,
                                    atol=1e-14)
 

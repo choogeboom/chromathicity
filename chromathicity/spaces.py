@@ -266,7 +266,11 @@ class ColorSpaceDataImpl(ColorSpaceData):
 
 @color_space('spectrum')
 class SpectralData(ColorSpaceDataImpl):
-    """ Contains raw reflectance spectral data """
+    """
+    Contains raw reflectance spectral data
+    
+    In addition to the usual data arguments, this 
+    """
     def __init__(self, data,
                  wavelengths: np.ndarray=None,
                  axis=None,
@@ -506,9 +510,4 @@ class HslData(RgbsSensitive):
 
 @color_space('hsi')
 class HsiData(RgbsSensitive):
-    pass
-
-
-@color_space('xyy')
-class XyyData(WhitePointSensitive):
     pass

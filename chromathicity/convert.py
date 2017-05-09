@@ -19,7 +19,7 @@ LAB_KAPPA = 903.3
 
 # noinspection PyUnusedLocal
 @color_conversion('lab', 'xyzr')
-def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
+def lab2xyzr(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert LAB to normalized XYZ
     
@@ -46,7 +46,7 @@ def lab2xyzr(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
 
 # noinspection PyUnusedLocal
 @color_conversion('lab', 'lchab')
-def lab2lchab(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
+def lab2lchab(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert L*a*b* to LCh
     
@@ -72,7 +72,7 @@ def lab2lchab(lab: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
 
 # noinspection PyUnusedLocal
 @color_conversion('lchab', 'lab')
-def lchab2lab(lch: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
+def lchab2lab(lch: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Converts LCh to L*a*b*
     
@@ -97,8 +97,8 @@ def lchab2lab(lch: np.ndarray, axis: int=None, **kwargs) -> np.ndarray:
 
 # noinspection PyUnusedLocal
 @color_conversion('lrgb', 'rgb')
-def lrgb2rgb(lrgb: np.ndarray,
-             rgbs: RgbSpecification=None, **kwargs) -> np.ndarray:
+def lrgb2rgb(lrgb: np.ndarray, *, rgbs: RgbSpecification=None,
+             **kwargs) -> np.ndarray:
     """
     Convert linear RGB to companded RGB
     
@@ -113,6 +113,7 @@ def lrgb2rgb(lrgb: np.ndarray,
 
 @color_conversion('lrgb', 'xyz')
 def lrgb2xyz(lrgb: np.ndarray,
+             *,
              axis: int=None,
              illuminant: Illuminant=None,
              observer: Observer=None,
@@ -174,6 +175,7 @@ def lrgb2xyz(lrgb: np.ndarray,
 # noinspection PyUnusedLocal
 @color_conversion('rgb', 'lrgb')
 def rgb2lrgb(rgb: np.ndarray,
+             *,
              rgbs: RgbSpecification=None, **kwargs) -> np.ndarray:
     """
     Convert companded RGB to linear RGB
@@ -190,6 +192,7 @@ def rgb2lrgb(rgb: np.ndarray,
 # noinspection PyUnusedLocal
 @color_conversion('rgb', 'hsl')
 def rgb2hsl(rgb: np.ndarray,
+            *,
             axis: int=None,
             **kwargs) -> np.ndarray:
     """
@@ -223,6 +226,7 @@ def rgb2hsl(rgb: np.ndarray,
 # noinspection PyUnusedLocal
 @color_conversion('hsl', 'rgb')
 def hsl2rgb(hsl: np.ndarray,
+            *,
             axis: int=None,
             **kwargs) -> np.ndarray:
     """
@@ -257,6 +261,7 @@ def hsl2rgb(hsl: np.ndarray,
 # noinspection PyUnusedLocal
 @color_conversion('rgb', 'hsi')
 def rgb2hsi(rgb: np.ndarray,
+            *,
             axis: int=None,
             **kwargs) -> np.ndarray:
     """
@@ -291,6 +296,7 @@ def rgb2hsi(rgb: np.ndarray,
 # noinspection PyUnusedLocal
 @color_conversion('hsi', 'rgb')
 def hsi2rgb(hsi: np.ndarray,
+            *,
             axis: int=None,
             **kwargs) -> np.ndarray:
     """
@@ -367,6 +373,7 @@ def _compute_rgb1(shape, inds, h_prime, x, chroma) -> np.ndarray:
 @color_conversion('spectrum', 'xyz')
 def spectrum2xyz(spectrum: np.ndarray,
                  wavelengths: np.ndarray,
+                 *,
                  axis: int=None,
                  illuminant: Illuminant=get_default_illuminant(),
                  observer: Observer=get_default_observer(),
@@ -419,7 +426,7 @@ def spectrum2xyz(spectrum: np.ndarray,
 
 # noinspection PyUnusedLocal
 @color_conversion('xyy', 'xyz')
-def xyy2xyz(xyy, axis: int=None, **kwargs) -> np.ndarray:
+def xyy2xyz(xyy, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     converts from xyY to XYZ
     
@@ -446,7 +453,7 @@ def xyy2xyz(xyy, axis: int=None, **kwargs) -> np.ndarray:
 
 
 @color_conversion('xyz', 'lrgb')
-def xyz2lrgb(xyz: np.ndarray,
+def xyz2lrgb(xyz: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=None,
              observer: Observer=None,
@@ -509,7 +516,7 @@ def xyz2lrgb(xyz: np.ndarray,
 
 # noinspection PyUnusedLocal
 @color_conversion('xyz', 'xyy')
-def xyz2xyy(xyz: np.ndarray,
+def xyz2xyy(xyz: np.ndarray, *,
             axis: int=None,
             illuminant: Illuminant=None,
             observer: Observer=None, **kwargs) -> np.ndarray:
@@ -599,7 +606,7 @@ def xyz2xyz(source_xyz: np.ndarray,
 
 # noinspection PyUnusedLocal
 @color_conversion('xyz', 'xyzr')
-def xyz2xyzr(xyz: np.ndarray,
+def xyz2xyzr(xyz: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=get_default_illuminant(),
              observer: Observer=get_default_observer(), **kwargs) -> np.ndarray:
@@ -622,7 +629,7 @@ def xyz2xyzr(xyz: np.ndarray,
 
 # noinspection PyUnusedLocal
 @color_conversion('xyzr', 'lab')
-def xyzr2lab(xyzr: np.ndarray,
+def xyzr2lab(xyzr: np.ndarray, *,
              axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert from normalized XYZ to LAB
@@ -651,7 +658,7 @@ def xyzr2lab(xyzr: np.ndarray,
 
 # noinspection PyUnusedLocal
 @color_conversion('xyzr', 'xyz')
-def xyzr2xyz(xyzr: np.ndarray,
+def xyzr2xyz(xyzr: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=None,
              observer: Observer=None, **kwargs) -> np.ndarray:
