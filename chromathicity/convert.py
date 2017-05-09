@@ -204,13 +204,12 @@ def rgb2hsl(rgb: np.ndarray,
     """
     if axis is None:
         axis = get_matching_axis(rgb.shape, 3)
-    big_m = np.max(rgb, axis=axis, keepdims=True)
-    little_m = np.min(rgb, axis=axis, keepdims=True)
+    big_m, little_m, chroma = _compute_chroma(rgb, axis)
 
     inds = construct_component_inds(axis, rgb.ndim, 3)
 
     hsl = np.zeros(rgb.shape)
-    hsl[inds[0]] = _compute_rgb_hue(rgb, big_m, little_m, axis)
+    hsl[inds[0]] = _compute_rgb_hue(rgb, big_m, little_m, chroma, axis)
     l = 0.5 * (big_m + little_m)
     hsl[inds[2]] = l
 
@@ -274,13 +273,12 @@ def rgb2hsi(rgb: np.ndarray,
     """
     if axis is None:
         axis = get_matching_axis(rgb.shape, 3)
-    big_m = np.max(rgb, axis=axis, keepdims=True)
-    little_m = np.min(rgb, axis=axis, keepdims=True)
+    big_m, little_m, chroma = _compute_chroma(rgb, axis)
 
     inds = construct_component_inds(axis, rgb.ndim, 3)
 
     hsi = np.zeros(rgb.shape)
-    hsi[inds[0]] = _compute_rgb_hue(rgb, big_m, little_m, axis)
+    hsi[inds[0]] = _compute_rgb_hue(rgb, big_m, little_m, chroma, axis)
     hsi[inds[2]] = np.mean(rgb, axis=axis, keepdims=True)
 
     i_nz = hsi[inds[2]] != 0  # type: np.ndarray
@@ -324,9 +322,123 @@ def hsi2rgb(hsi: np.ndarray,
         return rgb1 + little_m
 
 
-def _compute_rgb_hue(rgb: np.ndarray, big_m, little_m, axis: int) -> np.ndarray:
-    """ Compute the RGB Hue. This is the same for HSV and HSL """
+# noinspection PyUnusedLocal
+@color_conversion('rgb', 'hsv')
+def rgb2hsv(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+    """
+    Convert from RGB to Hue Saturation Value (HSV)
+    
+    :param rgb: 
+    :param axis: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(rgb.shape, 3)
+
+    big_m, little_m, chroma = _compute_chroma(rgb, axis)
+
+    inds = construct_component_inds(axis, rgb.ndim, 3)
+
+    hsv = np.zeros(rgb.shape)
+    hsv[inds[0]] = _compute_rgb_hue(rgb, big_m, little_m, chroma, axis)
+    hsv[inds[2]] = big_m
+
+    big_m_nz = big_m != 0
+    hsv[inds[1]][big_m_nz] = chroma[big_m_nz] / big_m[big_m_nz]
+
+    return hsv
+
+
+@color_conversion('hsv', 'rgb')
+def hsv2rgb(hsv: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+    """
+    Convert from HSV to RGB
+    :param hsv: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(hsv.shape, 3)
+
+    inds = construct_component_inds(axis, hsv.ndim, 3)
+
+    chroma = hsv[inds[1]] * hsv[inds[2]]
+    h_prime = hsv[inds[0]] / 60.
+    x = chroma * (1. - np.abs(np.mod(h_prime, 2.) - 1))  # type: np.ndarray
+    rgb1 = _compute_rgb1(hsv.shape, inds, h_prime, x, chroma)
+    little_m = hsv[inds[2]] - chroma
+
+    if little_m.ndim > rgb1.ndim:
+        # This only happens in the 1D case
+        return rgb1 + little_m[0]
+    else:
+        return rgb1 + little_m
+
+
+@color_conversion('rgb', 'hcy')
+def rgb2hcy(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+    """
+    Convert from RGB to Hue, Chroma, Luma (Y'_601)
+    
+    :param rgb: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(rgb.shape, 3)
+
+    big_m, little_m, chroma = _compute_chroma(rgb, axis)
+
+    inds = construct_component_inds(axis, rgb.ndim, 3)
+
+    hcy = np.zeros(rgb.shape)
+    hcy[inds[0]] = _compute_rgb_hue(rgb, big_m, little_m, chroma, axis)
+    hcy[inds[1]] = chroma
+    hcy[inds[2]] = 0.299*rgb[inds[0]] + 0.587*rgb[inds[1]] + 0.114*rgb[inds[2]]
+
+    return hcy
+
+
+@color_conversion('hcy', 'rgb')
+def hcy2rgb(hcy: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+    """
+    
+    :param hcy: 
+    :param axis: 
+    :param kwargs: 
+    :return: 
+    """
+    if axis is None:
+        axis = get_matching_axis(hcy.shape, 3)
+
+    inds = construct_component_inds(axis, hcy.ndim, 3)
+
+    h_prime = hcy[inds[0]] / 60.
+    x = hcy[inds[1]] * (1 - np.abs(np.mod(h_prime, 2) - 1))
+    rgb1 = _compute_rgb1(hcy.shape, inds, h_prime, x, hcy[inds[1]])
+    little_m = hcy[inds[2]] - (0.299*rgb1[inds[0]] + 0.587*rgb1[inds[1]]
+                               + 0.114*rgb1[inds[2]])
+
+    if little_m.ndim > rgb1.ndim:
+        # This only happens in the 1D case
+        return rgb1 + little_m[0]
+    else:
+        return rgb1 + little_m
+
+
+def _compute_chroma(rgb: np.ndarray,
+                    axis: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    big_m = np.max(rgb, axis=axis, keepdims=True)
+    little_m = np.min(rgb, axis=axis, keepdims=True)
     chroma = big_m - little_m
+    return big_m, little_m, chroma
+
+
+def _compute_rgb_hue(rgb: np.ndarray, big_m, little_m, chroma,
+                     axis: int) -> np.ndarray:
+    """ Compute the RGB Hue. This is the same for HSV and HSL """
     inds = construct_component_inds(axis, rgb.ndim, 3)
     r = rgb[inds[0]]
     g = rgb[inds[1]]

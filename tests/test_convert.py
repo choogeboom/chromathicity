@@ -152,6 +152,32 @@ class TestXyz:
         np.testing.assert_allclose(actual_xyz, xyz, rtol=1e-5, atol=1e-14)
 
 
+class TestHsv:
+    def test_rgb2hsv_1d(self):
+        run_forward_reverse(convert.rgb2hsv,
+                            convert.hsv2rgb,
+                            np.array([1., .5, .25]),
+                            np.array([20., .75, 1.])
+                            )
+
+    def test_rgb2hsv_2d(self):
+        run_forward_reverse(convert.rgb2hsv,
+                            convert.hsv2rgb,
+                            np.array([[1., .5, .25],
+                                      [.25, .5, 1.]]),
+                            np.array([[20., .75, 1.],
+                                      [220., .75, 1.]]))
+
+
+class TestHcy:
+    def test_rgb2hcy_1d(self):
+        run_forward_reverse(convert.rgb2hcy,
+                            convert.hcy2rgb,
+                            np.array([1., .5, .25]),
+                            np.array([20., .75, 0.621])
+                            )
+
+
 def run_forward_reverse(convert_forward, convert_reverse, source, destination,
                         **kwargs):
     actual_destination = convert_forward(source, **kwargs)
