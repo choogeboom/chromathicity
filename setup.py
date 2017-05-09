@@ -16,7 +16,7 @@ KEYWORDS = 'color color-space cielab ciexyz math conversion convert'
 
 setup(
     name='chromathicity',
-    version='0.1.0',
+    version='0.2.0',
     description='Extensible color conversions',
     long_description='',
     url='https://github.com/hoogamaphone/chromathicity',
