@@ -340,6 +340,10 @@ class SpectralData(ColorSpaceDataImpl):
         self._wavelengths = wavelengths
 
     @property
+    def num_components(self):
+        return self.wavelengths.size
+
+    @property
     def wavelengths(self):
         return self._wavelengths
 
