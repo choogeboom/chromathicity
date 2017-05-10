@@ -1,5 +1,5 @@
 """
-Much of the code in this module was taken and modified from the python-colormath 
+Some of the code in this module was taken and modified from the python-colormath 
 package, which is located at 
 
     https://github.com/gtaylor/python-colormath
@@ -115,7 +115,7 @@ class DummyConversionManager(ConversionManager):
 _conversion_manager = GraphConversionManager()
 
 
-def color_conversion(start_type, target_type):
+def color_conversion(from_space_name, target_space_name):
     """
     
     Decorator to indicate a function that performs a conversion from one 
@@ -124,16 +124,15 @@ def color_conversion(start_type, target_type):
     it can be used to perform color space transformations between color 
     spaces that do not have direct conversion functions (e.g., Luv to CMYK). 
     
-    Note: For a conversion to/from RGB supply the BaseRGBColor class.
-    
-    :param start_type: Starting color space type
-    :param target_type: Target color space type
+    :param from_space_name: Starting color space name
+    :param target_space_name: Target color space name
     """
 
     def decorator(f):
-        f.start_type = start_type
-        f.target_type = target_type
-        _conversion_manager.add_type_conversion(start_type, target_type, f)
+        f.start_type = from_space_name
+        f.target_type = target_space_name
+        _conversion_manager.add_type_conversion(from_space_name,
+                                                target_space_name, f)
         return f
 
     return decorator
