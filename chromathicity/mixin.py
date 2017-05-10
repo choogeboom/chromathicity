@@ -13,6 +13,7 @@ class SetGet:
         """
         for key in kwargs:
             setattr(self, key, kwargs[key])
+        return self
 
     def get(self, *args):
         """
