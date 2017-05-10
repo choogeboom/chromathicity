@@ -1,3 +1,11 @@
+"""
+:mod: chromathicity.spaces -- Color space objects
+===================================
+.. module:: chromathicity.spaces
+   
+"""
+
+
 from abc import ABC, abstractmethod
 from copy import copy
 import sys
@@ -12,16 +20,20 @@ from chromathicity.chromadapt import (
     get_default_chromatic_adaptation_algorithm, ChromaticAdaptationAlgorithm)
 from chromathicity.error import raise_not_implemented, UndefinedColorSpaceError
 from chromathicity.illuminant import get_default_illuminant, Illuminant
+from chromathicity.mixin import SetGet
 from chromathicity.rgbspec import (get_default_rgb_specification,
                                    RgbSpecification)
 from chromathicity.observer import get_default_observer, Observer
 
 
+# Stores all named color spaces
 _space_name_map = bidict()
 
 
 def get_space(space: Union[str, type]):
-    """ Get the space name and class associated with it"""
+    """
+    Get the space name and class associated with it
+    """
     if isinstance(space, str):
         if space in _space_name_map:
             space_name = space
@@ -43,8 +55,8 @@ def get_space(space: Union[str, type]):
     return space_name, space_class
 
 
-def get_space_type(space_name: str):
-    """Get the color space type associated with a color space"""
+def get_space_class(space_name: str):
+    """Get the color space class associated with a color space"""
     if space_name in _space_name_map:
         class_name = _space_name_map[space_name]
         return getattr(sys.modules[__name__], class_name)
@@ -62,10 +74,12 @@ def get_space_name(space_type: type):
 
 def color_space(name: str):
     """
-    Decorator that adds a class to the _space_name_map
+    Decorator that registers a class as a color space
     
-    :param name: 
-    :return: 
+    :param name: The name of the color space. This is use to determine which 
+                 conversion functions get called when converting to/from the
+                 space.
+    :return: decorator that returns the class after registering it
     """
     def decorator(cls: type):
         _space_name_map[name] = cls.__name__
@@ -89,6 +103,10 @@ class ColorSpaceData(ABC):
     @abstractmethod
     def axis(self):
         pass
+
+    @axis.setter
+    def axis(self, a):
+        raise_not_implemented(self, 'setting axis')
 
     @property
     @abstractmethod
@@ -131,7 +149,7 @@ class ColorSpaceData(ABC):
         pass
 
 
-class ColorSpaceDataImpl(ColorSpaceData):
+class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     """
     A full implementation of the ColorSpaceDataBase interface. All color space 
     data classes should inherit this.
@@ -192,12 +210,28 @@ class ColorSpaceDataImpl(ColorSpaceData):
                                for key, value in self._get_kwargs().items())
         return f'{type(self).__name__}({self.data!r}, {kwarg_repr})'
 
+    def __eq__(self, other):
+        return (type(self) == type(other)
+                and np.allclose(self.data, other.data)
+                and self.axis == other.axis
+                and self.illuminant == other.illuminant
+                and self.observer == other.observer
+                and self.rgbs == other.rgbs
+                and self.caa == other.caa)
+
     @property
     def components(self):
-        component_inds = construct_component_inds(self.axis, self.data.ndim, 3)
+        component_inds = construct_component_inds(self.axis,
+                                                  self.data.ndim,
+                                                  self.num_components)
         return tuple(self[c] for c in component_inds)
 
-    def to(self, space: Union[str, type]) -> ColorSpaceData:
+    @property
+    def num_components(self):
+        return 3
+
+    def to(self, space: Union[str, type],
+           **kwargs) -> ColorSpaceData:
         """
         Convert this space to another
         
@@ -206,15 +240,15 @@ class ColorSpaceDataImpl(ColorSpaceData):
         """
         to_space, to_class = get_space(space)
         from_space = get_space_name(type(self))
-        if from_space == to_space:
-            return copy(self)
-        kwargs = self._get_kwargs()
+        self_kwargs = self._get_kwargs()
         converted_data = convert(self.data,
                                  from_space=from_space,
                                  to_space=to_space,
-                                 **kwargs)
-        return to_class(data=converted_data,
-                        **kwargs)
+                                 **self_kwargs)
+        new_data = to_class(data=converted_data,
+                            **self_kwargs)
+        new_data.set(**kwargs)
+        return new_data
 
     def _get_kwargs(self):
         return {'axis': self.axis,
@@ -230,6 +264,18 @@ class ColorSpaceDataImpl(ColorSpaceData):
     @property
     def axis(self):
         return self._axis
+
+    @axis.setter
+    def axis(self, a):
+        if a is None:
+            self.axis = get_matching_axis(self.data.shape,
+                                          self.num_components)
+        elif a != self.axis:
+            new_dims = list(range(self.data.ndim))
+            new_dims[a] = self.axis
+            new_dims[self.axis] = a
+            self._data = self._data.transpose(new_dims)
+            self._axis = a
 
     @property
     def illuminant(self):
@@ -495,6 +541,9 @@ class RgbsSensitive(WhitePointSensitive):
 
 @color_space('lrgb')
 class LinearRgbData(RgbsSensitive):
+    """
+    Represents data that is uncompanded RGB
+    """
     pass
 
 
