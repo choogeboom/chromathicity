@@ -94,9 +94,9 @@ class Custom(RgbSpecification, SetGet):
         self._name = ""
         self._illuminant = get_default_illuminant()
         self._observer = get_default_observer()
-        self._xyy = np.array([[0.6, 0.3, 20.0],
-                              [0.3, 0.6, 80.0],
-                              [0.2, 0.1, 10.0]])
+        self._xyy = np.array([[0.6, 0.3, .200],
+                              [0.3, 0.6, .800],
+                              [0.2, 0.1, .100]])
         self.set(**kwargs)
 
     def __repr__(self):
@@ -160,9 +160,9 @@ class Srgb(RgbSpecification):
 
     @property
     def xyy(self):
-        return np.array([[0.64, 0.33, 21.2656],
-                         [0.30, 0.60, 71.5158],
-                         [0.15, 0.06,  7.2186]])
+        return np.array([[0.64, 0.33, .212656],
+                         [0.30, 0.60, .715158],
+                         [0.15, 0.06,  .072186]])
 
 
 class Compander(ABC):

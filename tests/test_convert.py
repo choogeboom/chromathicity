@@ -3,6 +3,7 @@ import numpy as np
 import chromathicity.convert as convert
 from chromathicity.illuminant import D
 from chromathicity.observer import Standard
+from chromathicity.rgbspec import Srgb
 
 
 class TestHsl:
@@ -49,8 +50,8 @@ class TestSpectra:
         wavelengths = np.array([450, 550, 650])
         ill = D()
         obs = Standard()
-        expected_xyz = np.array([[40.9895, 94.0882, 0.82745],
-                                 [58.8691, 96.1091, 95.0708]])
+        expected_xyz = np.array([[.409895, .940882, .0082745],
+                                 [.588691, .961091, .950708]])
         actual_xyz = convert.spectrum2xyz(spectra, wavelengths, illuminant=ill,
                                           observer=obs)
         np.testing.assert_allclose(actual_xyz, expected_xyz,
@@ -61,9 +62,9 @@ class TestSpectra:
         wavelengths = np.array([450, 550, 650])
         ill = D()
         obs = Standard()
-        expected_xyz = np.array([[40.9895, 58.8691],
-                                 [94.0882, 96.1091],
-                                 [0.82745, 95.0708]])
+        expected_xyz = np.array([[.409895, .588691],
+                                 [.940882, .961091],
+                                 [.0082745, .950708]])
         actual_xyz = convert.spectrum2xyz(spectra, wavelengths, illuminant=ill,
                                           observer=obs)
         np.testing.assert_allclose(actual_xyz, expected_xyz,
@@ -74,7 +75,7 @@ class TestSpectra:
         wavelengths = np.array([450, 550, 650])
         ill = D()
         obs = Standard()
-        expected_xyz = np.array([58.8691, 96.1091, 95.0708])
+        expected_xyz = np.array([.588691, .961091, .950708])
         actual_xyz = convert.spectrum2xyz(spectra, wavelengths, illuminant=ill,
                                           observer=obs)
         np.testing.assert_allclose(actual_xyz, expected_xyz,
@@ -128,7 +129,7 @@ class TestXyz:
     def test_xyz2lab_big(self):
         ill = D()
         obs = Standard()
-        xyz = np.array([22.53909, 18.41865, 9.529589])
+        xyz = np.array([.2253909, .1841865, .09529589])
         expected_lab = np.array([50.0, 25.0, 25.0])
         actual_lab = convert.convert(xyz, 'xyz', 'lab',
                                      illuminant=ill, observer=obs)
@@ -141,7 +142,7 @@ class TestXyz:
     def test_xyz2lab_small(self):
         ill = D()
         obs = Standard()
-        xyz = np.array([0.8, 0.9, 0.7])
+        xyz = np.array([0.008, 0.009, 0.007])
         expected_lab = np.array([8.1289723, -2.267124, 4.004512])
         actual_lab = convert.convert(xyz, 'xyz', 'lab',
                                      illuminant=ill, observer=obs)
@@ -178,12 +179,50 @@ class TestHcy:
                             )
 
 
+class TestLCHab:
+    def test_lab2lchab_1d(self):
+        run_forward_reverse(convert.lab2lchab,
+                            convert.lchab2lab,
+                            np.array([50., 25., 25.]),
+                            np.array([50., np.sqrt(2 * 25. ** 2), 45.]))
+
+    def test_lab2lchab_2d(self):
+        run_forward_reverse(convert.lab2lchab,
+                            convert.lchab2lab,
+                            np.array([[50., 25., 25.], [30., 0., 45.]]),
+                            np.array([[50., np.sqrt(2 * 25. ** 2), 45.],
+                                      [30., 45., 90.]]))
+
+
+class TestLRgb:
+    def test_lrgb2rgb_1d(self):
+        rgbs = Srgb()
+        run_forward_reverse(convert.lrgb2rgb,
+                            convert.rgb2lrgb,
+                            np.array([0.25, .5, .75]),
+                            np.array([.537099, .735357, .880825]),
+                            rgbs=rgbs)
+        run_forward_reverse(convert.lrgb2rgb,
+                            convert.rgb2lrgb,
+                            np.array([0.25, .5, .75]),
+                            np.array([.537099, .735357, .880825]))
+
+    def test_lrgb2xyz_1d(self):
+        run_forward_reverse(convert.lrgb2xyz,
+                            convert.xyz2lrgb,
+                            np.array([.5, .75, 0.]),
+                            np.array([.474394, .642696, .099061]))
+
+
 def run_forward_reverse(convert_forward, convert_reverse, source, destination,
                         **kwargs):
     actual_destination = convert_forward(source, **kwargs)
     assert actual_destination.shape == destination.shape
-    np.testing.assert_allclose(actual_destination, destination)
+    np.testing.assert_allclose(actual_destination, destination,
+                               rtol=1e-5, atol=1e-14)
     if convert_reverse is not None:
-        actual_source = convert_reverse(destination, **kwargs)
+        actual_source = convert_reverse(actual_destination, **kwargs)
         assert actual_source.shape == source.shape
-        np.testing.assert_allclose(actual_source, source)
+        np.testing.assert_allclose(actual_source, source,
+                                   rtol=1e-5,
+                                   atol=1e-14)

@@ -9,7 +9,7 @@
 from abc import ABC, abstractmethod
 from copy import copy
 import sys
-from typing import Union
+from typing import Union, Iterable
 
 from bidict import bidict
 import numpy as np
@@ -155,7 +155,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     data classes should inherit this.
     """
     def __init__(self,
-                 data: Union[np.ndarray, ColorSpaceData],
+                 data: Union[np.ndarray, Iterable, ColorSpaceData],
                  axis: int=None,
                  illuminant: Illuminant=None,
                  observer: Observer=None,
@@ -317,8 +317,8 @@ class SpectralData(ColorSpaceDataImpl):
     
     In addition to the usual data arguments, this 
     """
-    def __init__(self, data,
-                 wavelengths: np.ndarray=None,
+    def __init__(self, data: Union[np.ndarray, Iterable, ColorSpaceData],
+                 wavelengths: Union[np.ndarray, Iterable]=None,
                  axis=None,
                  *args,
                  **kwargs):
@@ -328,16 +328,20 @@ class SpectralData(ColorSpaceDataImpl):
             else:
                 raise TypeError('SpectralData expected wavelength data, but it '
                                 'was not specified.')
+        if not isinstance(data, np.ndarray):
+            data = np.array(data)
+        if not isinstance(wavelengths, np.ndarray):
+            wavelengths = np.array(wavelengths, copy=True)
         if axis is None:
             if isinstance(data, ColorSpaceData):
                 if data.axis is None:
-                    axis = get_matching_axis(data.data.shape, wavelengths.size)
+                    axis = get_matching_axis(data.data.shape, len(wavelengths))
                 else:
                     axis = data.axis
             else:
-                axis = get_matching_axis(data.shape, wavelengths.size)
+                axis = get_matching_axis(data.shape, len(wavelengths))
         super().__init__(data, axis, *args, **kwargs)
-        self._wavelengths = wavelengths
+        self._wavelengths = np.array(wavelengths, copy=True)
 
     @property
     def num_components(self):

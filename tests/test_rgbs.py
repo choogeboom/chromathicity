@@ -12,9 +12,9 @@ class TestRgbSpecification:
 
     def test_srgb_linear_transformation(self):
         srgb = Srgb()
-        actual_linear_transformation = np.array([[41.2418, 21.2653, 1.93321],
-                                                 [35.7579, 71.5159, 11.9193],
-                                                 [18.0469, 7.21877, 95.0471]])
+        actual_linear_transformation = np.array([[.412418, .212653, .0193321],
+                                                 [.357579, .715159, .119193],
+                                                 [.180469, .0721877, .950471]])
         np.testing.assert_allclose(srgb.linear_transformation,
                                    actual_linear_transformation,
                                    rtol=1e-5, atol=1e-14)

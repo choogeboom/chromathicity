@@ -515,7 +515,7 @@ def spectrum2xyz(spectrum: np.ndarray,
 
     illuminant_psd = illuminant.get_psd(wavelengths).reshape(new_shape)
 
-    norm_factor = (100
+    norm_factor = (1
                    / integrate.trapz(illuminant_psd * ybar,
                                      x=wavelengths, axis=axis))
 

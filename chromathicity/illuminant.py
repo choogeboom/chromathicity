@@ -75,7 +75,7 @@ class Illuminant(ABC):
         z_power = observer.zbar * p
         is_valid_z = np.logical_not(np.isnan(z_power))
         z_point = integrate.trapz(z_power[is_valid_z], wls[is_valid_z])
-        return 100 * np.array([x_point, y_point, z_point])/y_point
+        return np.array([x_point, y_point, z_point])/y_point
 
 
 class D(Illuminant):
