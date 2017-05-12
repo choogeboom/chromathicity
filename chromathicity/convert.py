@@ -162,6 +162,9 @@ def lrgb2xyz(lrgb: np.ndarray,
     if lrgb_is_not_matrix:
         xyz = xyz.reshape(input_shape)
 
+    if axis != n_dims - 1:
+        xyz = xyz.transpose(new_dims)
+
     source_white_point = rgbs.white_point
     destination_white_point = illuminant.get_white_point(observer)
     if not np.allclose(source_white_point, destination_white_point,
@@ -653,8 +656,9 @@ def xyz2xyy(xyz: np.ndarray, *,
     nzd = denominator != 0
 
     xyy = np.zeros(xyz.shape)
-    xyy[inds[0]][nzd] = xyz[inds[0]][nzd] / denominator[nzd]
-    xyy[inds[1]][nzd] = xyz[inds[1]][nzd] / denominator[nzd]
+    if np.any(nzd):
+        xyy[inds[0]][nzd] = xyz[inds[0]][nzd] / denominator[nzd]
+        xyy[inds[1]][nzd] = xyz[inds[1]][nzd] / denominator[nzd]
     xyy[inds[2]] = xyz[inds[1]]
     if not np.all(nzd):
         # For any point that is pure black (X=Y=Z=0), give it the
@@ -665,7 +669,9 @@ def xyz2xyy(xyz: np.ndarray, *,
         # non-black
         if white_point[1] > 0:
             zd = np.logical_not(nzd)
-            white_point_xyy = xyz2xyy(white_point, None, illuminant, observer)
+            white_point_xyy = xyz2xyy(white_point,
+                                      illuminant=illuminant,
+                                      observer=observer)
             xyy[inds[0]][zd] = white_point_xyy[0]
             xyy[inds[1]][zd] = white_point_xyy[1]
     return xyy

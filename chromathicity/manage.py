@@ -37,7 +37,8 @@ from logging import getLogger
 
 from networkx import DiGraph, shortest_path, NetworkXNoPath
 
-from chromathicity.error import UndefinedConversionError
+from chromathicity.error import UndefinedConversionError, \
+    UndefinedColorSpaceError
 
 logger = getLogger(__name__)
 
@@ -77,6 +78,10 @@ class GraphConversionManager(ConversionManager):
         self.conversion_graph = DiGraph()
 
     def get_conversion_path(self, start_type, target_type):
+        if start_type not in self.conversion_graph:
+            raise UndefinedColorSpaceError(start_type)
+        if target_type not in self.conversion_graph:
+            raise UndefinedColorSpaceError(target_type)
         try:
             # Retrieve node sequence that leads from start_type to target_type.
             path = shortest_path(self.conversion_graph, start_type, target_type)

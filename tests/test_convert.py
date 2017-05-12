@@ -1,6 +1,9 @@
 import numpy as np
+from pytest import raises
 
 import chromathicity.convert as convert
+from chromathicity.error import UndefinedConversionError, \
+    UndefinedColorSpaceError
 from chromathicity.illuminant import D
 from chromathicity.observer import Standard
 from chromathicity.rgbspec import Srgb
@@ -114,6 +117,12 @@ class TestXyy:
         np.testing.assert_allclose(actual_xyz, expected_xyz,
                                    rtol=1e-5, atol=1e-14)
 
+    def test_xyz2xyy_with0(self):
+        run_forward_reverse(convert.xyz2xyy,
+                            convert.xyy2xyz,
+                            np.array([0., 0., 0.]),
+                            np.array([.312709, .329005, 0.]))
+
 
 class TestXyz:
 
@@ -178,6 +187,16 @@ class TestHcy:
                             np.array([20., .75, 0.621])
                             )
 
+    def test_rgb2hcy_2d(self):
+        run_forward_reverse(convert.rgb2hcy,
+                            convert.hcy2rgb,
+                            np.array([[1., .5],
+                                      [.5, .25],
+                                      [.25, 1.]]),
+                            np.array([[20., 260.],
+                                      [.75, .75],
+                                      [.621, .41025]]))
+
 
 class TestLCHab:
     def test_lab2lchab_1d(self):
@@ -212,6 +231,33 @@ class TestLRgb:
                             convert.xyz2lrgb,
                             np.array([.5, .75, 0.]),
                             np.array([.474394, .642696, .099061]))
+
+    def test_lrgb2xyz_2d(self):
+        run_forward_reverse(convert.lrgb2xyz,
+                            convert.xyz2lrgb,
+                            np.array([[.5, 0.],
+                                      [.75, .75],
+                                      [0., .5]]),
+                            np.array([[.474394, .358419],
+                                      [.642696, .572463],
+                                      [.099061, .56463]]))
+
+    def test_lrgb2xyz_caa(self):
+        run_forward_reverse(convert.lrgb2xyz,
+                            convert.xyz2lrgb,
+                            np.array([.5, .75, 0.]),
+                            np.array([.506836, .648909, .079791]),
+                            illuminant=D('D_50'))
+
+
+class TestConvert:
+    def test_illegal_conversion(self):
+        with raises(UndefinedConversionError):
+            convert.convert(np.array([1., 1., 1.]), 'xyz', 'spectrum')
+
+    def test_undefined_space(self):
+        with raises(UndefinedColorSpaceError):
+            convert.convert(np.ones((3,)), 'xyz', 'pizza')
 
 
 def run_forward_reverse(convert_forward, convert_reverse, source, destination,
