@@ -257,6 +257,47 @@ class A(Illuminant):
         )
 
 
+class E(Illuminant):
+    """
+    Ideal Illuminant
+    
+    From `Wikipedia <https://en.wikipedia.org/wiki/
+    Standard_illuminant#Illuminant_E>`_:
+    
+        *Illuminant E is an equal-energy radiator; it has a constant SPD 
+        inside the visible spectrum. It is useful as a theoretical reference; 
+        an illuminant that gives equal weight to all wavelengths, presenting 
+        an even color. It also has equal CIE XYZ tristimulus values, thus its 
+        chromaticity coordinates are (x,y)=(1/3,1/3). This is by design; the 
+        XYZ color matching functions are normalized such that their integrals 
+        over the visible spectrum are the same.*
+
+        *Illuminant E is not a black body, so it does not have a color 
+        temperature, but it can be approximated by a D series illuminant with 
+        a CCT of 5455 K. (Of the canonical illuminants, D55 is the closest.) 
+        Manufacturers sometimes compare light sources against Illuminant E to 
+        calculate the excitation purity.* 
+    """
+    _WAVELENGTHS = np.arange(360, 10, 831)
+
+    def __repr__(self):
+        return 'E()'
+
+    @Illuminant.wavelengths.getter
+    def wavelengths(self):
+        if self._WAVELENGTHS.flags.writeable:
+            self._WAVELENGTHS.flags.writeable = False
+        return self._WAVELENGTHS
+
+    @Illuminant.psd.getter
+    def psd(self):
+        # noinspection PyTypeChecker
+        return self.get_psd(self.wavelengths)
+
+    def get_psd(self, wavelengths: np.ndarray):
+        return np.ones((len(wavelengths),))
+
+
 # noinspection PyMethodOverriding
 class CustomIlluminant(Illuminant):
     """
