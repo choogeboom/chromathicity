@@ -19,7 +19,7 @@ setup(
     version='0.2.0',
     description='Extensible color conversions',
     long_description='',
-    url='https://github.com/hoogamaphone/chromathicity',
+    url='https://hoogamaphone.github.io/chromathicity/',
     author='Christopher Hoogeboom',
     author_email='chris.hoogeboom@gmail.com',
     license='BSD',
