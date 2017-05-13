@@ -27,30 +27,15 @@ class Illuminant(ABC):
     def __str__(self):
         return self.name
 
-    # noinspection PyUnusedLocal
-    @name.setter
-    def name(self, val):
-        raise_not_implemented(self, 'Setting name')
-
     @property
     @abstractmethod
     def wavelengths(self) -> np.ndarray:
         pass
 
-    # noinspection PyUnusedLocal
-    @wavelengths.setter
-    def wavelengths(self, val: np.ndarray):
-        raise_not_implemented(self, 'Setting wavelengths')
-
     @property
     @abstractmethod
     def psd(self) -> np.ndarray:
         pass
-
-    # noinspection PyUnusedLocal
-    @psd.setter
-    def psd(self, val: np.ndarray):
-        raise_not_implemented(self, 'Setting psd')
 
     def get_psd(self, wavelengths: np.ndarray) -> np.ndarray:
         return interp1(wavelengths, self.wavelengths, self.psd)
@@ -143,14 +128,14 @@ class D(Illuminant):
     def __init__(self, temperature=None):
         self._temperature = None
         if temperature is None:
-            self.temperature = 'D_65'
+            self._set_temperature('D_65')
         else:
-            self.temperature = temperature
+            self._set_temperature(temperature)
 
     def __repr__(self):
         return 'D({:g})'.format(self.temperature)
 
-    @property
+    @Illuminant.name.getter
     def name(self):
         if self.temperature in self.STANDARD_TEMPERATURES.inv:
             return self.STANDARD_TEMPERATURES.inv[self.temperature]
@@ -161,8 +146,7 @@ class D(Illuminant):
     def temperature(self):
         return self._temperature
 
-    @temperature.setter
-    def temperature(self, t):
+    def _set_temperature(self, t):
         if isinstance(t, str):
             if t in self.STANDARD_TEMPERATURES:
                 self._temperature = self.STANDARD_TEMPERATURES[t]
@@ -175,33 +159,34 @@ class D(Illuminant):
                 raise ValueError('Illuminant D must have a temperature between ' 
                                  '4000 and 25000.')
 
-    @property
+    @Illuminant.wavelengths.getter
     def wavelengths(self):
         if self._WAVELENGTHS.flags.writeable:
             self._WAVELENGTHS.flags.writeable = False
         return self._WAVELENGTHS
 
     def get_psd(self, wavelengths: np.ndarray):
-        s = self.get_daylight_components(wavelengths)
-        m = self.daylight_coefficients
+        s = self._get_daylight_components(wavelengths)
+        m = self._daylight_coefficients
         return s[0] + m[0]*s[1] + m[1]*s[2]
 
-    def get_daylight_components(self, wavelengths):
+    def _get_daylight_components(self, wavelengths):
         return tuple(interp1(wavelengths, self.wavelengths, s) for s in self._S)
 
-    @property
+    @Illuminant.psd.getter
     def psd(self):
+        # noinspection PyTypeChecker
         return self.get_psd(self.wavelengths)
 
     @property
-    def daylight_coefficients(self):
-        x, y = self.chromaticity_coordinates
+    def _daylight_coefficients(self):
+        x, y = self._chromaticity_coordinates
         md = 0.0241 + 0.2562*x - 0.7341*y
         return ((-1.3515 - 1.7703*x + 5.9114*y)/md,
                 (0.0300 - 31.4424*x + 30.0717*y)/md)
 
     @property
-    def chromaticity_coordinates(self):
+    def _chromaticity_coordinates(self):
         t = self.temperature
         if t <= 7000:
             xd = -4.607e9/t**3 + 2.9678e6/t**2 + 0.09911e3/t + 0.244063
@@ -243,19 +228,20 @@ class A(Illuminant):
     def __repr__(self):
         return 'A({})'.format(self.temperature)
 
-    @property
+    @Illuminant.name.getter
     def name(self):
         if self.temperature == self._DEFAULT_TEMPERATURE:
             return 'A'
         else:
             return 'A_{}K'.format(self.temperature)
 
-    @property
+    @Illuminant.wavelengths.getter
     def wavelengths(self):
         return self._WAVELENGTHS
 
-    @property
+    @Illuminant.psd.getter
     def psd(self):
+        # noinspection PyTypeChecker
         return self.get_psd(self.wavelengths)
 
     def get_psd(self, wavelengths: np.ndarray=None) -> np.ndarray:
@@ -271,40 +257,28 @@ class A(Illuminant):
         )
 
 
-class Custom(Illuminant, SetGet):
+# noinspection PyMethodOverriding
+class CustomIlluminant(Illuminant):
     """
-    A class that allows dynamic creation of new observers
+    A class that allows dynamic creation of new illuminants
     """
 
-    def __init__(self, **kwargs):
-        self._name = ''
-        self._wavelengths = np.zeros((0, 0))
-        self._psd = np.zeros((0, 0))
-        self.set(**kwargs)
+    def __init__(self, *, name='', wavelengths=(), psd=()):
+        self._name = name
+        self._wavelengths = np.array(wavelengths)
+        self._psd = np.array(psd)
 
-    @property
+    @Illuminant.name.getter
     def name(self):
         return self._name
 
-    @name.setter
-    def name(self, n):
-        self._name = n
-
-    @property
+    @Illuminant.wavelengths.getter
     def wavelengths(self):
         return self._wavelengths
 
-    @wavelengths.setter
-    def wavelengths(self, w):
-        self._wavelengths = w
-
-    @property
+    @Illuminant.psd.getter
     def psd(self):
         return self._psd
-
-    @psd.setter
-    def psd(self, p):
-        self._psd = p
 
 
 def get_default_illuminant() -> Illuminant:

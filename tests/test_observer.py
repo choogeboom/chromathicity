@@ -1,4 +1,5 @@
 from pytest import raises
+import numpy as np
 
 from chromathicity.observer import Observer, Standard
 
@@ -15,7 +16,4 @@ class TestObserver:
         assert obs.name == 'CIE Standard 1931 2° Observer'
         assert obs.year == 1931
         assert obs.wavelengths[5] == 365
-        assert obs.xbar[5] == 0.000232100000
-        assert obs.ybar[5] == 0.000006965000
-        assert obs.zbar[5] == 0.001086000000
         assert repr(obs) == "Standard(2)"

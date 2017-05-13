@@ -31,11 +31,12 @@ class TestChromaticAdaptationAlgorithm:
                                    atol=1e-14)
         expected_transform = np.array(
             [
-                [1.21649, 0.153353, -0.0239488],
-                [0.111005, 0.915228, 0.0359010],
-                [-0.154947, -0.0560010, 0.314703]
+                [1.2164509, 0.15332493, -0.023949391],
+                [.11098616, 0.91524230, 0.035903103],
+                [-.1549409, -0.055997489, 0.31469628]
             ])
-        actual_transform = caa.get_linear_transformation(white_point_d, white_point_a)
+        actual_transform = caa.get_linear_transformation(white_point_d,
+                                                         white_point_a)
         np.testing.assert_allclose(actual_transform, expected_transform,
                                    rtol=1e-5, atol=1e-14)
 
@@ -46,9 +47,10 @@ class TestChromaticAdaptationAlgorithm:
         white_point_d = illuminant_d.get_white_point(obs)
         white_point_a = illuminant_a.get_white_point(obs)
         caa = Bradford()
-        xyz_d = np.array([25.0, 75.0, 35.0])
-        expected_xyz_a = np.array([33.3145, 70.5159, 13.1085])
-        actual_xyz_a = convert.xyz2xyz(xyz_d, white_point_d, white_point_a, caa=caa)
+        xyz_d = np.array([.25, .750, .350])
+        expected_xyz_a = np.array([.33312305, .7051638, .13108368])
+        actual_xyz_a = convert.xyz2xyz(xyz_d, white_point_d, white_point_a,
+                                       caa=caa)
         np.testing.assert_allclose(actual_xyz_a, expected_xyz_a,
                                    rtol=1e-5, atol=1e-14)
 
@@ -59,18 +61,18 @@ class TestChromaticAdaptationAlgorithm:
         white_point_d = illuminant_d.get_white_point(obs)
         white_point_a = illuminant_a.get_white_point(obs)
         caa = Bradford()
-        xyz_d = np.array([[[25.0, 15.0],
-                           [75.0, 55.0],
-                           [35.0, 20.0]],
-                          [[35.0, 30.0],
-                           [45.0, 40.0],
-                           [15.0, 50.0]]])
-        expected_xyz_a = np.array([[[33.3145, 21.2536],
-                                    [70.5158, 51.5178],
-                                    [13.1085, 7.90939]],
-                                   [[45.2482, 33.1876],
-                                    [45.7126, 38.4097],
-                                    [5.49789, 16.4527]]])
+        xyz_d = np.array([[[.25, .15],
+                           [.75, .55],
+                           [.35, .20]],
+                          [[.35, .30],
+                           [.45, .40],
+                           [.15, .50]]])
+        expected_xyz_a = np.array([[[.333123, .212521],
+                                    [.705164, .515183],
+                                    [.131084, .0790936]],
+                                   [[.452460, .331859],
+                                    [.457123, .384096],
+                                    [.0549786, .164526]]])
         actual_xyz_a = convert.xyz2xyz(xyz_d, white_point_d, white_point_a,
                                        axis=1, caa=caa)
         np.testing.assert_allclose(actual_xyz_a, expected_xyz_a,

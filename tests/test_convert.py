@@ -53,8 +53,8 @@ class TestSpectra:
         wavelengths = np.array([450, 550, 650])
         ill = D()
         obs = Standard()
-        expected_xyz = np.array([[.409895, .940882, .0082745],
-                                 [.588691, .961091, .950708]])
+        expected_xyz = np.array([[.4098627, .9408818, .008271787],
+                                 [.588645, .961091, .950396]])
         actual_xyz = convert.spectrum2xyz(spectra, wavelengths, illuminant=ill,
                                           observer=obs)
         np.testing.assert_allclose(actual_xyz, expected_xyz,
@@ -65,9 +65,9 @@ class TestSpectra:
         wavelengths = np.array([450, 550, 650])
         ill = D()
         obs = Standard()
-        expected_xyz = np.array([[.409895, .588691],
-                                 [.940882, .961091],
-                                 [.0082745, .950708]])
+        expected_xyz = np.array([[.4098627, .588645],
+                                 [.9408818, .961091],
+                                 [.008271787, .950396]])
         actual_xyz = convert.spectrum2xyz(spectra, wavelengths, illuminant=ill,
                                           observer=obs)
         np.testing.assert_allclose(actual_xyz, expected_xyz,
@@ -78,7 +78,7 @@ class TestSpectra:
         wavelengths = np.array([450, 550, 650])
         ill = D()
         obs = Standard()
-        expected_xyz = np.array([.588691, .961091, .950708])
+        expected_xyz = np.array([.588645, .961091, .950396])
         actual_xyz = convert.spectrum2xyz(spectra, wavelengths, illuminant=ill,
                                           observer=obs)
         np.testing.assert_allclose(actual_xyz, expected_xyz,
@@ -121,7 +121,7 @@ class TestXyy:
         run_forward_reverse(convert.xyz2xyy,
                             convert.xyy2xyz,
                             np.array([0., 0., 0.]),
-                            np.array([.312709, .329005, 0.]))
+                            np.array([.312729, .329052, 0.]))
 
 
 class TestXyz:
@@ -139,7 +139,7 @@ class TestXyz:
         ill = D()
         obs = Standard()
         xyz = np.array([.2253909, .1841865, .09529589])
-        expected_lab = np.array([50.0, 25.0, 25.0])
+        expected_lab = np.array([49.999998, 25.008156, 24.990288])
         actual_lab = convert.convert(xyz, 'xyz', 'lab',
                                      illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_lab, expected_lab, rtol=1e-5,
@@ -152,7 +152,7 @@ class TestXyz:
         ill = D()
         obs = Standard()
         xyz = np.array([0.008, 0.009, 0.007])
-        expected_lab = np.array([8.1289723, -2.267124, 4.004512])
+        expected_lab = np.array([8.1289723, -2.264535, 4.001228])
         actual_lab = convert.convert(xyz, 'xyz', 'lab',
                                      illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_lab, expected_lab, rtol=1e-5,
@@ -230,7 +230,7 @@ class TestLRgb:
         run_forward_reverse(convert.lrgb2xyz,
                             convert.xyz2lrgb,
                             np.array([.5, .75, 0.]),
-                            np.array([.474394, .642696, .099061]))
+                            np.array([.474396, .64272, .099065]))
 
     def test_lrgb2xyz_2d(self):
         run_forward_reverse(convert.lrgb2xyz,
@@ -238,15 +238,15 @@ class TestLRgb:
                             np.array([[.5, 0.],
                                       [.75, .75],
                                       [0., .5]]),
-                            np.array([[.474394, .358419],
-                                      [.642696, .572463],
-                                      [.099061, .56463]]))
+                            np.array([[.474396, .3584],
+                                      [.64272, .572481],
+                                      [.099065, .564454]]))
 
     def test_lrgb2xyz_caa(self):
         run_forward_reverse(convert.lrgb2xyz,
                             convert.xyz2lrgb,
                             np.array([.5, .75, 0.]),
-                            np.array([.506836, .648909, .079791]),
+                            np.array([.506831, .64893, .079794]),
                             illuminant=D('D_50'))
 
 
