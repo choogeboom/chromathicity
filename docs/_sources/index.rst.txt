@@ -12,6 +12,7 @@ Welcome to Chromathicity's documentation!
 
    intro
    tutorial
+   spaces_api
 
 
 

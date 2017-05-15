@@ -9,7 +9,7 @@
 from abc import ABC, abstractmethod
 from copy import copy
 import sys
-from typing import Union, Iterable
+from typing import Union, Iterable, Tuple
 
 from bidict import bidict
 import numpy as np
@@ -26,8 +26,11 @@ from chromathicity.rgbspec import (get_default_rgb_specification,
 from chromathicity.observer import get_default_observer, Observer
 
 
+__all__ = ['get_space', 'get_space_class', 'get_space_name']
+
+
 # Stores all named color spaces
-_space_name_map = bidict()
+_space_name_to_type_map = {}
 
 
 def get_space(space: Union[str, type]):
@@ -35,62 +38,81 @@ def get_space(space: Union[str, type]):
     Get the space name and class associated with it
     """
     if isinstance(space, str):
-        if space in _space_name_map:
-            space_name = space
-            space_class_name = _space_name_map[space]
-        elif space in _space_name_map.inv:
-            space_name = _space_name_map.inv[space]
-            space_class_name = space
+        if space in _space_name_to_type_map:
+            space_class = _space_name_to_type_map[space]
         else:
             raise UndefinedColorSpaceError(space)
-        space_class = getattr(sys.modules[__name__], space_class_name)
-    elif isinstance(space, type) and issubclass(space, ColorSpaceData):
-        if space.__name__ in _space_name_map.inv:
-            space_name = _space_name_map.inv[space.__name__]
-            space_class = space
-        else:
-            raise UndefinedColorSpaceError(space)
+    elif isinstance(space, type) and issubclass(space, ColorSpaceData) \
+            and space.__spacename__:
+        space_class = space
     else:
         raise TypeError(f'Illegal color space type: {type(space).__name__}')
+    space_name = space_class.__spacename__
     return space_name, space_class
 
 
 def get_space_class(space_name: str):
     """Get the color space class associated with a color space"""
-    if space_name in _space_name_map:
-        class_name = _space_name_map[space_name]
-        return getattr(sys.modules[__name__], class_name)
+    if isinstance(space_name, str):
+        if space_name in _space_name_to_type_map:
+            return _space_name_to_type_map[space_name]
+        else:
+            raise UndefinedColorSpaceError(space_name)
     else:
-        raise UndefinedColorSpaceError(space_name)
+        raise TypeError('get_space_class expected a str object, but got a '
+                        f'{type(space_name).__name__} instead.')
 
 
-def get_space_name(space_type: type):
+def get_space_name(space_class: type):
     """Get the color space name associated with a color space"""
-    if space_type.__name__ in _space_name_map.inv:
-        return _space_name_map.inv[space_type.__name__]
+    if isinstance(space_class, type):
+        if issubclass(space_class, ColorSpaceData) \
+                and space_class.__spacename__:
+            return space_class.__spacename__
+        else:
+            raise UndefinedColorSpaceError(space_class)
     else:
-        raise UndefinedColorSpaceError(space_type)
+        raise TypeError('get_space_name expected a type object, but got a '
+                        f'{type(space_class).__name__} instead.')
 
 
-def color_space(name: str):
+def color_space(*args):
     """
-    Decorator that registers a class as a color space
+    Decorator that registers a class as a color space. Any number of aliases 
+    can be passed.
     
-    :param name: The name of the color space. This is use to determine which 
-                 conversion functions get called when converting to/from the
-                 space.
     :return: decorator that returns the class after registering it
+    
+    Example
+    -------
+    
+    The ``color_space`` decorator registers a class as a color space for color 
+    conversions.
+    
+    .. code-block:: python
+       
+       @color_space('test1', 'test2')
+       class TestSpaceData(ColorSpaceDataImpl):
+           pass
+       
+   
     """
+
     def decorator(cls: type):
-        _space_name_map[name] = cls.__name__
-        cls.__spacename__ = name
+        if args:
+            cls.__spacename__ = args[0].lower()
+            for name in args:
+                _space_name_to_type_map[name.lower()] = cls
         return cls
     return decorator
 
 
 class ColorSpaceData(ABC):
     """
-    Defines the main interface for all color space data classes
+    Defines the main interface for all color space data classes. 
+    :class:`ColorSpaceDataImpl` provides a minimal implementation of this 
+    interface, so all color space data classes should extend that class instead
+    of this one.
     """
     __spacename__ = ''
 
@@ -151,20 +173,22 @@ class ColorSpaceData(ABC):
 
 class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     """
-    A full implementation of the ColorSpaceDataBase interface. All color space 
-    data classes should inherit this.
+    A full implementation of the :class:`ColorSpaceDataBase` interface. All 
+    color space data classes should extend this.
     """
     def __init__(self,
-                 data: Union[np.ndarray, Iterable, ColorSpaceData],
+                 data: Union[np.ndarray, Iterable[float], ColorSpaceData],
                  axis: int=None,
-                 illuminant: Illuminant=None,
-                 observer: Observer=None,
-                 rgbs: RgbSpecification=None,
-                 caa: ChromaticAdaptationAlgorithm=None):
+                 illuminant: Illuminant=get_default_illuminant(),
+                 observer: Observer=get_default_observer(),
+                 rgbs: RgbSpecification=get_default_rgb_specification(),
+                 caa: ChromaticAdaptationAlgorithm=get_default_chromatic_adaptation_algorithm()):
         """
         
         :param data: the color space data to contain
-        :param axis: the axis along which the color data lies
+        :param axis: the axis along which the color data lies. If `axis` is not
+           specified, then it will be determined automatically by finding the 
+           last dimension with the required size.
         :param illuminant: the illuminant
         :param observer: the observer
         :param rgbs: the rgb specification
@@ -196,21 +220,21 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                      if caa is not None
                      else get_default_chromatic_adaptation_algorithm())
 
-    def __array__(self, dtype):
+    def __array__(self, dtype) -> np.ndarray:
         if dtype == self._data.dtype:
             return self._data
         else:
             return np.array(self._data, copy=True, dtype=dtype)
 
-    def __getitem__(self, *args, **kwargs):
+    def __getitem__(self, *args, **kwargs) -> Union[float, np.ndarray]:
         return self.data.__getitem__(*args, **kwargs)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         kwarg_repr = ', '.join(f'{key!s}={value!r}'
                                for key, value in self._get_kwargs().items())
         return f'{type(self).__name__}({self.data!r}, {kwarg_repr})'
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         return (type(self) == type(other)
                 and np.allclose(self.data, other.data)
                 and self.axis == other.axis
@@ -220,23 +244,37 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                 and self.caa == other.caa)
 
     @property
-    def components(self):
+    def components(self) -> Tuple[np.ndarray, ...]:
+        """
+        :return: Tuple containing the correct slices of the data to get the 
+           individual color space components. For example, in :class:`LabData`, 
+           this property would contain ``(L*, a*, b*)``. 
+        """
         component_inds = construct_component_inds(self.axis,
                                                   self.data.ndim,
                                                   self.num_components)
         return tuple(self[c] for c in component_inds)
 
     @property
-    def num_components(self):
+    def num_components(self) -> int:
+        """
+        :return: The number of components in the color space. For example 
+           :class:`LabData` has three components: L*, a*, b*. 
+        """
         return 3
 
     def to(self, space: Union[str, type],
            **kwargs) -> ColorSpaceData:
         """
-        Convert this space to another
+        Convert this space to another space.::
         
-        :param space: either the name of the space, or the class
+            lab = LabData([50., 25., 25.])
+            xyz = lab.to('xyz')
+        
+        :param space: either the name or the class of the destination color 
+           space. 
         :return: The new color space data
+
         """
         to_space, to_class = get_space(space)
         from_space = get_space_name(type(self))
@@ -258,11 +296,11 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                 'caa': self.caa}
 
     @property
-    def data(self):
+    def data(self) -> np.ndarray:
         return self._data
 
     @property
-    def axis(self):
+    def axis(self) -> int:
         return self._axis
 
     @axis.setter
@@ -278,7 +316,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
             self._axis = a
 
     @property
-    def illuminant(self):
+    def illuminant(self) -> Illuminant:
         return self._illuminant
 
     @illuminant.setter
@@ -286,7 +324,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         self._illuminant = ill
 
     @property
-    def observer(self):
+    def observer(self) -> Observer:
         return self._observer
 
     @observer.setter
@@ -294,7 +332,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         self._observer = obs
 
     @property
-    def rgbs(self):
+    def rgbs(self) -> RgbSpecification:
         return self._rgbs
 
     @rgbs.setter
@@ -302,7 +340,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         self._rgbs = r
 
     @property
-    def caa(self):
+    def caa(self) -> ChromaticAdaptationAlgorithm:
         return self._caa
 
     @caa.setter
@@ -315,10 +353,23 @@ class SpectralData(ColorSpaceDataImpl):
     """
     Contains raw reflectance spectral data
     
-    In addition to the usual data arguments, this 
+    In addition to the usual data arguments, this data also needs the 
+    wavelengths of the spectra. 
+    
+    :param data: The spectral data [reflectance].
+    :param wavelengths: The wavelengths that correspond to the spectra.
+    :param axis: The axis along which the spectra lie.
+    :param illuminant: The illuminant
+    :type illuminant: Illuminant
+    :param observer: The observer
+    :type observer: Observer
+    :param rgbs: The RGB specification
+    :type rgbs: RgbSpecification
+    :param caa: The chromatic adaptation algorithm.
+    :type caa: ChromaticAdaptationAlgorithm
     """
-    def __init__(self, data: Union[np.ndarray, Iterable, ColorSpaceData],
-                 wavelengths: Union[np.ndarray, Iterable]=None,
+    def __init__(self, data: Union[np.ndarray, Iterable[float], ColorSpaceData],
+                 wavelengths: Union[np.ndarray, Iterable[float]]=None,
                  axis=None,
                  *args,
                  **kwargs):

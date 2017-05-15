@@ -1,0 +1,5 @@
+Color Spaces
+============
+
+Color spaces are defined, for the most part, in the
+:py:module:`chromathicity.spaces` module.

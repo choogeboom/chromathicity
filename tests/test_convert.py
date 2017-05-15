@@ -138,8 +138,8 @@ class TestXyz:
     def test_xyz2lab_big(self):
         ill = D()
         obs = Standard()
-        xyz = np.array([.2253909, .1841865, .09529589])
-        expected_lab = np.array([49.999998, 25.008156, 24.990288])
+        xyz = np.array([.2253731, .18418652, .09526464])
+        expected_lab = np.array([50., 25., 25.])
         actual_lab = convert.convert(xyz, 'xyz', 'lab',
                                      illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_lab, expected_lab, rtol=1e-5,

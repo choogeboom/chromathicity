@@ -1,0 +1,312 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Color Spaces &#8212; Chromathicity 0.2.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.2.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Tutorial" href="tutorial.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="color-spaces">
+<h1>Color Spaces<a class="headerlink" href="#color-spaces" title="Permalink to this headline">¶</a></h1>
+<p>Color spaces are defined, for the most part, in the
+<code class="docutils literal"><span class="pre">chromathicity.spaces</span></code> module.</p>
+<div class="section" id="basic-interface">
+<h2>Basic Interface<a class="headerlink" href="#basic-interface" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="chromathicity.spaces.ColorSpaceData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">ColorSpaceData</code><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the main interface for all color space data classes. 
+<code class="xref py py-class docutils literal"><span class="pre">ColorSpaceDataImpl</span></code> provides a minimal implementation of this 
+interface, so all color space data classes should extend that class instead
+of this one.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="chromathicity.spaces.ColorSpaceDataImpl">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">ColorSpaceDataImpl</code><span class="sig-paren">(</span><em>data</em>, <em>axis=None</em>, <em>illuminant=D(6504)</em>, <em>observer=Standard(2)</em>, <em>rgbs=Srgb()</em>, <em>caa=Bradford()</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceDataImpl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceDataImpl" title="Permalink to this definition">¶</a></dt>
+<dd><p>A full implementation of the <code class="xref py py-class docutils literal"><span class="pre">ColorSpaceDataBase</span></code> interface. All 
+color space data classes should extend this.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">float</span></code></a>], <a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></a>]) &#8211; the color space data to contain</li>
+<li><strong>axis</strong> (<code class="xref py py-data docutils literal"><span class="pre">Optional</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a>]) &#8211; the axis along which the color data lies. If <cite>axis</cite> is not
+specified, then it will be determined automatically by finding the 
+last dimension with the required size.</li>
+<li><strong>illuminant</strong> (<code class="xref py py-class docutils literal"><span class="pre">Illuminant</span></code>) &#8211; the illuminant</li>
+<li><strong>observer</strong> (<code class="xref py py-class docutils literal"><span class="pre">Observer</span></code>) &#8211; the observer</li>
+<li><strong>rgbs</strong> (<code class="xref py py-class docutils literal"><span class="pre">RgbSpecification</span></code>) &#8211; the rgb specification</li>
+<li><strong>caa</strong> (<code class="xref py py-class docutils literal"><span class="pre">ChromaticAdaptationAlgorithm</span></code>) &#8211; the chromatic adaptation algorithm</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="chromathicity.spaces.ColorSpaceDataImpl.components">
+<code class="descname">components</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceDataImpl.components" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, ...]</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Tuple containing the correct slices of the data to get the 
+individual color space components. For example, in <code class="xref py py-class docutils literal"><span class="pre">LabData</span></code>, 
+this property would contain <code class="docutils literal"><span class="pre">(L*,</span> <span class="pre">a*,</span> <span class="pre">b*)</span></code>.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="chromathicity.spaces.ColorSpaceDataImpl.num_components">
+<code class="descname">num_components</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceDataImpl.num_components" title="Permalink to this definition">¶</a></dt>
+<dd><table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The number of components in the color space. For example 
+<code class="xref py py-class docutils literal"><span class="pre">LabData</span></code> has three components: L*, a*, b*.</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="chromathicity.spaces.ColorSpaceDataImpl.to">
+<code class="descname">to</code><span class="sig-paren">(</span><em>space</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceDataImpl.to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceDataImpl.to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert this space to another space.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([</span><span class="mf">50.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">])</span>
+<span class="n">xyz</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s1">&#39;xyz&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>space</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#type" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">type</span></code></a>]) &#8211; either the name or the class of the destination color 
+space.</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></a></td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The new color space data</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="spectral-data">
+<h2>Spectral Data<a class="headerlink" href="#spectral-data" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="chromathicity.spaces.SpectralData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">SpectralData</code><span class="sig-paren">(</span><em>data</em>, <em>wavelengths=None</em>, <em>axis=None</em>, <em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#SpectralData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.SpectralData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Contains raw reflectance spectral data</p>
+<p>In addition to the usual data arguments, this data also needs the 
+wavelengths of the spectra.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">float</span></code></a>], <a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></a>]) &#8211; The spectral data [reflectance].</li>
+<li><strong>wavelengths</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">float</span></code></a>], <code class="docutils literal"><span class="pre">None</span></code>]) &#8211; The wavelengths that correspond to the spectra.</li>
+<li><strong>axis</strong> &#8211; The axis along which the spectra lie.</li>
+<li><strong>illuminant</strong> (<em>Illuminant</em>) &#8211; The illuminant</li>
+<li><strong>observer</strong> (<em>Observer</em>) &#8211; The observer</li>
+<li><strong>rgbs</strong> (<em>RgbSpecification</em>) &#8211; The RGB specification</li>
+<li><strong>caa</strong> (<em>ChromaticAdaptationAlgorithm</em>) &#8211; The chromatic adaptation algorithm.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="cie-spaces">
+<h2>CIE Spaces<a class="headerlink" href="#cie-spaces" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="chromathicity.spaces.XyzData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">XyzData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#XyzData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.XyzData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents data from the CIE XYZ color space.</p>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/CIE_1931_color_space">Wikipedia</a>:</p>
+<blockquote>
+<div><p><em>The CIE 1931 color spaces were the first defined quantitative links 
+between physical pure colors (i.e. wavelengths) in the 
+electromagnetic visible spectrum, and physiological perceived colors 
+in human color vision. The mathematical relationships that define 
+these color spaces are essential tools for color management, 
+important when dealing with color inks, illuminated displays, 
+and recording devices such as digital cameras.</em></p>
+<p><em>The CIE 1931 RGB color space and CIE 1931 XYZ color space were 
+created by the International Commission on Illumination (CIE) in 
+1931. They resulted from a series of experiments done in the late 
+1920s by William David Wright and John Guild. The experimental 
+results were combined into the specification of the CIE RGB color 
+space, from which the CIE XYZ color space was derived.</em></p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="class">
+<dt id="chromathicity.spaces.XyyData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">XyyData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#XyyData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.XyyData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents data from the CIE xyY color space</p>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space">Wikipedia</a></p>
+<blockquote>
+<div><p>Since the human eye has three types of color sensors that respond to 
+different ranges of wavelengths, a full plot of all visible colors is 
+a three-dimensional figure. However, the concept of color can be 
+divided into two parts: brightness and chromaticity. For example, 
+the color white is a bright color, while the color grey is considered 
+to be a less bright version of that same white. In other words, 
+the chromaticity of white and grey are the same while their 
+brightness differs.</p>
+<p>The CIE XYZ color space was deliberately designed so that the Y 
+parameter is a measure of the luminance of a color. The chromaticity 
+of a color is then specified by the two derived parameters x and y, 
+two of the three normalized values being functions of all three 
+tristimulus values X, Y, and Z.</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="class">
+<dt id="chromathicity.spaces.LabData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">LabData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#LabData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.LabData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents the CIE L*a*b* color space.</p>
+<p>From <a class="reference external" href="https://en.wikipedia.org/wiki/Lab_color_space#CIELAB">Wikipedia</a>:</p>
+<blockquote>
+<div><p><em>CIE L*a*b* (CIELAB) is a color space specified by the International 
+Commission on Illumination (French Commission internationale de 
+l&#8217;éclairage, hence its CIE initialism). It describes all the colors 
+visible to the human eye and was created to serve as a 
+device-independent model to be used as a reference.</em></p>
+<p><em>The three coordinates of CIELAB represent the lightness of the color 
+(L* = 0 yields black and L* = 100 indicates diffuse white; specular 
+white may be higher), its position between red/magenta and green (a*, 
+negative values indicate green while positive values indicate 
+magenta) and its position between yellow and blue (b*, negative 
+values indicate blue and positive values indicate yellow). The 
+asterisk (*) after L, a and b are pronounced</em> star <em>and are part of the 
+full name, since they represent L*, a* and b*, to distinguish them 
+from Hunter&#8217;s L, a, and b.</em></p>
+</div></blockquote>
+</dd></dl>
+
+</div>
+<div class="section" id="rgb-spaces">
+<h2>RGB Spaces<a class="headerlink" href="#rgb-spaces" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="chromathicity.spaces.RgbData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">RgbData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#RgbData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.RgbData" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Color Spaces</a><ul>
+<li><a class="reference internal" href="#basic-interface">Basic Interface</a></li>
+<li><a class="reference internal" href="#spectral-data">Spectral Data</a></li>
+<li><a class="reference internal" href="#cie-spaces">CIE Spaces</a></li>
+<li><a class="reference internal" href="#rgb-spaces">RGB Spaces</a></li>
+</ul>
+</li>
+</ul>
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="tutorial.html" title="previous chapter">Tutorial</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/spaces_api.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Christopher Hoogeboom.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+      |
+      <a href="_sources/spaces_api.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
