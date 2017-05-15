@@ -84,15 +84,20 @@ last dimension with the required size.</li>
 <dl class="attribute">
 <dt id="chromathicity.spaces.ColorSpaceDataImpl.components">
 <code class="descname">components</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceDataImpl.components" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
+<dd><p>Tuple containing the correct slices of the data to get the 
+individual color space components. For example, in <code class="xref py py-class docutils literal"><span class="pre">LabData</span></code>, 
+this property would contain <code class="docutils literal"><span class="pre">(L*,</span> <span class="pre">a*,</span> <span class="pre">b*)</span></code>.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([[</span><span class="mf">50.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">],</span> <span class="p">[</span><span class="mf">75.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">60.</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="go">array([[ 50.],</span>
+<span class="go">       [ 75.]])</span>
+</pre></div>
+</div>
+<table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, ...]</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">Tuple containing the correct slices of the data to get the 
-individual color space components. For example, in <code class="xref py py-class docutils literal"><span class="pre">LabData</span></code>, 
-this property would contain <code class="docutils literal"><span class="pre">(L*,</span> <span class="pre">a*,</span> <span class="pre">b*)</span></code>.</td>
 </tr>
 </tbody>
 </table>

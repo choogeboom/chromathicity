@@ -823,7 +823,8 @@ def get_matching_axis(shape: Tuple, length: int) -> int:
 
 def construct_component_inds(axis: int,
                              n_dims: int,
-                             n_components: int) -> Tuple[Tuple]:
+                             n_components: int,
+                             min_ndims: int=2) -> Tuple[Tuple]:
     """
     Construct a tuple of tuples, where each element extracts the correct 
     component values.
@@ -838,7 +839,7 @@ def construct_component_inds(axis: int,
         tuple(slice(i, i+1)
               if dim == axis
               else (slice(None) if dim < n_dims else np.newaxis)
-              for dim in range(max(n_dims, 2)))
+              for dim in range(max(n_dims, min_ndims)))
         for i in range(n_components))
 
 

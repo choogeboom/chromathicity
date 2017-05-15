@@ -246,13 +246,20 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     @property
     def components(self) -> Tuple[np.ndarray, ...]:
         """
-        :return: Tuple containing the correct slices of the data to get the 
-           individual color space components. For example, in :class:`LabData`, 
-           this property would contain ``(L*, a*, b*)``. 
+        Tuple containing the correct slices of the data to get the 
+        individual color space components. For example, in :class:`LabData`, 
+        this property would contain ``(L*, a*, b*)``.
+        
+        >>> lab = LabData([[50., 25., 25.], [75., 0., 60.]])
+        >>> lab.components[0]
+        array([[ 50.],
+               [ 75.]])
+        
         """
         component_inds = construct_component_inds(self.axis,
                                                   self.data.ndim,
-                                                  self.num_components)
+                                                  self.num_components,
+                                                  min_ndims=0)
         return tuple(self[c] for c in component_inds)
 
     @property

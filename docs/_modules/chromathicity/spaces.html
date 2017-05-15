@@ -291,13 +291,20 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: Tuple containing the correct slices of the data to get the </span>
-<span class="sd">           individual color space components. For example, in :class:`LabData`, </span>
-<span class="sd">           this property would contain ``(L*, a*, b*)``. </span>
+<span class="sd">        Tuple containing the correct slices of the data to get the </span>
+<span class="sd">        individual color space components. For example, in :class:`LabData`, </span>
+<span class="sd">        this property would contain ``(L*, a*, b*)``.</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; lab = LabData([[50., 25., 25.], [75., 0., 60.]])</span>
+<span class="sd">        &gt;&gt;&gt; lab.components[0]</span>
+<span class="sd">        array([[ 50.],</span>
+<span class="sd">               [ 75.]])</span>
+<span class="sd">        </span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">component_inds</span> <span class="o">=</span> <span class="n">construct_component_inds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">,</span>
                                                   <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span>
-                                                  <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span><span class="p">)</span>
+                                                  <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span><span class="p">,</span>
+                                                  <span class="n">min_ndims</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">component_inds</span><span class="p">)</span>
 
     <span class="nd">@property</span>
