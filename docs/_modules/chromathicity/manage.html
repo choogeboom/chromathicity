@@ -1,0 +1,313 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>chromathicity.manage &#8212; Chromathicity 0.2.1 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.2.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for chromathicity.manage</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Some of the code in this module was taken and modified from the python-colormath </span>
+<span class="sd">package, which is located at </span>
+
+<span class="sd">    https://github.com/gtaylor/python-colormath</span>
+
+<span class="sd">Below is the Copyright notice for that code:</span>
+
+<span class="sd">Copyright (c) 2014, Greg Taylor</span>
+<span class="sd">All rights reserved.</span>
+
+<span class="sd">Redistribution and use in source and binary forms, with or without modification, </span>
+<span class="sd">are permitted provided that the following conditions are met:</span>
+
+<span class="sd"> * Redistributions of source code must retain the above copyright notice, this </span>
+<span class="sd">   list of conditions and the following disclaimer.</span>
+<span class="sd"> * Redistributions in binary form must reproduce the above copyright notice, </span>
+<span class="sd">   this list of conditions and the following disclaimer in the documentation </span>
+<span class="sd">   and/or other materials provided with the distribution.</span>
+<span class="sd"> * Neither the name of the DUO Interactive, LLC nor the names of its </span>
+<span class="sd">   contributors may be used to endorse or promote products derived from this </span>
+<span class="sd">   software without specific prior written permission.</span>
+
+<span class="sd">THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS &quot;AS IS&quot; AND </span>
+<span class="sd">ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED </span>
+<span class="sd">WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE </span>
+<span class="sd">DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE </span>
+<span class="sd">FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL </span>
+<span class="sd">DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR </span>
+<span class="sd">SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER </span>
+<span class="sd">CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, </span>
+<span class="sd">OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE </span>
+<span class="sd">OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">logging</span> <span class="k">import</span> <span class="n">getLogger</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">networkx</span> <span class="k">import</span> <span class="n">DiGraph</span><span class="p">,</span> <span class="n">shortest_path</span><span class="p">,</span> <span class="n">NetworkXNoPath</span>
+
+<span class="kn">from</span> <span class="nn">chromathicity.error</span> <span class="k">import</span> <span class="n">UndefinedConversionError</span><span class="p">,</span> \
+    <span class="n">UndefinedColorSpaceError</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">ConversionManager</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">registered_color_spaces</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">add_type_conversion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span> <span class="n">target_type</span><span class="p">,</span> <span class="n">conversion_function</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Register a conversion function between two color spaces.</span>
+<span class="sd">        :param start_type: Starting color space.</span>
+<span class="sd">        :param target_type: Target color space.</span>
+<span class="sd">        :param conversion_function: Conversion function.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">registered_color_spaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">start_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">registered_color_spaces</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">target_type</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Registered conversion from </span><span class="si">%s</span><span class="s1"> to </span><span class="si">%s</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span>
+                     <span class="n">target_type</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_conversion_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span> <span class="n">target_type</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a list of conversion functions that if applied iteratively on a color of the start_type color space result</span>
+<span class="sd">        in a color in the result_type color space.</span>
+<span class="sd">        Raises an UndefinedConversionError if no valid conversion path can be found.</span>
+<span class="sd">        :param start_type: Starting color space type.</span>
+<span class="sd">        :param target_type: Target color space type.</span>
+<span class="sd">        :return: List of conversion functions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">GraphConversionManager</span><span class="p">(</span><span class="n">ConversionManager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conversion_graph</span> <span class="o">=</span> <span class="n">DiGraph</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_conversion_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span> <span class="n">target_type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">start_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conversion_graph</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">start_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">target_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conversion_graph</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">target_type</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Retrieve node sequence that leads from start_type to target_type.</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">shortest_path</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">conversion_graph</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span> <span class="n">target_type</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">NetworkXNoPath</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedConversionError</span><span class="p">(</span>
+                <span class="n">start_type</span><span class="p">,</span>
+                <span class="n">target_type</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="c1"># Look up edges between nodes and retrieve the conversion function</span>
+        <span class="c1"># for each edge.</span>
+        <span class="n">cf</span> <span class="o">=</span> <span class="s1">&#39;conversion_function&#39;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">conversion_graph</span><span class="o">.</span><span class="n">get_edge_data</span><span class="p">(</span><span class="n">node_a</span><span class="p">,</span> <span class="n">node_b</span><span class="p">)[</span><span class="n">cf</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">node_a</span><span class="p">,</span> <span class="n">node_b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">path</span><span class="p">[</span><span class="mi">1</span><span class="p">:])]</span>
+
+    <span class="k">def</span> <span class="nf">add_type_conversion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span> <span class="n">target_type</span><span class="p">,</span> <span class="n">conversion_function</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">add_type_conversion</span><span class="p">(</span><span class="n">start_type</span><span class="p">,</span>
+                                    <span class="n">target_type</span><span class="p">,</span>
+                                    <span class="n">conversion_function</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conversion_graph</span><span class="o">.</span><span class="n">add_edge</span><span class="p">(</span>
+            <span class="n">start_type</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="p">,</span>
+            <span class="p">{</span><span class="s1">&#39;conversion_function&#39;</span><span class="p">:</span> <span class="n">conversion_function</span><span class="p">})</span>
+
+
+<span class="k">class</span> <span class="nc">DummyConversionManager</span><span class="p">(</span><span class="n">ConversionManager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">add_type_conversion</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span> <span class="n">target_type</span><span class="p">,</span> <span class="n">conversion_function</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">get_conversion_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_type</span><span class="p">,</span> <span class="n">target_type</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">UndefinedConversionError</span><span class="p">(</span>
+            <span class="n">start_type</span><span class="p">,</span>
+            <span class="n">target_type</span><span class="p">,</span>
+        <span class="p">)</span>
+
+
+<span class="n">_conversion_manager</span> <span class="o">=</span> <span class="n">GraphConversionManager</span><span class="p">()</span>
+
+
+<span class="k">def</span> <span class="nf">color_conversion</span><span class="p">(</span><span class="n">from_space_name</span><span class="p">,</span> <span class="n">target_space_name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    </span>
+<span class="sd">    Decorator to indicate a function that performs a conversion from one </span>
+<span class="sd">    color space to another. This decorator will return the original function </span>
+<span class="sd">    unmodified, however it will be registered in the _conversion_manager so </span>
+<span class="sd">    it can be used to perform color space transformations between color </span>
+<span class="sd">    spaces that do not have direct conversion functions (e.g., Luv to CMYK). </span>
+<span class="sd">    </span>
+<span class="sd">    :param from_space_name: Starting color space name or type</span>
+<span class="sd">    :param target_space_name: Target color space name or type</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="n">f</span><span class="p">):</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">start_type</span> <span class="o">=</span> <span class="n">from_space_name</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">target_type</span> <span class="o">=</span> <span class="n">target_space_name</span>
+        <span class="n">_conversion_manager</span><span class="o">.</span><span class="n">add_type_conversion</span><span class="p">(</span><span class="n">from_space_name</span><span class="p">,</span>
+                                                <span class="n">target_space_name</span><span class="p">,</span> <span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">f</span>
+
+    <span class="k">return</span> <span class="n">decorator</span>
+
+
+<span class="k">def</span> <span class="nf">get_conversion_path</span><span class="p">(</span><span class="n">from_space</span><span class="p">,</span> <span class="n">to_space</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Returns a list of functions to apply to perform the conversion &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_conversion_manager</span><span class="o">.</span><span class="n">get_conversion_path</span><span class="p">(</span><span class="n">from_space</span><span class="p">,</span> <span class="n">to_space</span><span class="p">)</span>
+
+
+<span class="c1"># Stores all named color spaces</span>
+<span class="n">_space_name_to_type_map</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">get_space</span><span class="p">(</span><span class="n">space</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the space name and class associated with it</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">space</span> <span class="ow">in</span> <span class="n">_space_name_to_type_map</span><span class="p">:</span>
+            <span class="n">space_class</span> <span class="o">=</span> <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">space</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="s1">&#39;__spacename__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">space</span><span class="o">.</span><span class="n">__spacename__</span><span class="p">:</span>
+        <span class="n">space_class</span> <span class="o">=</span> <span class="n">space</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Illegal color space type: {type(space).__name__}&#39;</span><span class="p">)</span>
+    <span class="n">space_name</span> <span class="o">=</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span>
+    <span class="k">return</span> <span class="n">space_name</span><span class="p">,</span> <span class="n">space_class</span>
+
+
+<span class="k">def</span> <span class="nf">get_space_class</span><span class="p">(</span><span class="n">space_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the color space class associated with a color space</span>
+<span class="sd">    </span>
+<span class="sd">    :param space_name: The name of the space</span>
+<span class="sd">    </span>
+<span class="sd">    &gt;&gt;&gt; get_space_class(&#39;XYZ&#39;)</span>
+<span class="sd">    XyzData</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">space_name</span> <span class="ow">in</span> <span class="n">_space_name_to_type_map</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">space_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space_name</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;get_space_class expected a str object, but got a &#39;</span>
+                        <span class="n">f</span><span class="s1">&#39;{type(space_name).__name__} instead.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_space_name</span><span class="p">(</span><span class="n">space_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Get the color space name associated with a color space&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space_class</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">space_class</span><span class="p">,</span> <span class="s1">&#39;__spacename__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space_class</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;get_space_name expected a type object, but got a &#39;</span>
+                        <span class="n">f</span><span class="s1">&#39;{type(space_class).__name__} instead.&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="color_space"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.color_space">[docs]</a><span class="k">def</span> <span class="nf">color_space</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator that registers a class as a color space.</span>
+<span class="sd">    </span>
+<span class="sd">    :return: decorator that returns the class after registering it</span>
+<span class="sd">    </span>
+<span class="sd">    The ``color_space`` decorator registers a class as a color space for color </span>
+<span class="sd">    conversions.::</span>
+<span class="sd">    </span>
+<span class="sd">       @color_space(&#39;test1&#39;)</span>
+<span class="sd">       class TestSpaceData(ColorSpaceDataImpl):</span>
+<span class="sd">           pass</span>
+<span class="sd">       </span>
+<span class="sd">   </span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">__spacename__</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2017, Christopher Hoogeboom.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.5</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.10</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

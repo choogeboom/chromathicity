@@ -7,17 +7,16 @@ from chromathicity.error import UndefinedColorSpaceError
 
 
 def test_get_space():
-    assert chromathicity.manage.get_space('xyz') == ('xyz', sp.XyzData)
-    assert chromathicity.manage.get_space('XyzData') == ('xyz', sp.XyzData)
-    assert chromathicity.manage.get_space(sp.XyzData) == ('xyz', sp.XyzData)
+    assert chromathicity.manage.get_space('CIEXYZ') == ('CIEXYZ', sp.XyzData)
+    assert chromathicity.manage.get_space(sp.XyzData) == ('CIEXYZ', sp.XyzData)
     with raises(UndefinedColorSpaceError):
         chromathicity.manage.get_space('peanut')
-    with raises(UndefinedColorSpaceError):
+    with raises(TypeError):
         chromathicity.manage.get_space(sp.WhitePointSensitive)
 
 
 def test_spectral_data():
-    spectrum = sp.SpectralData([[1, 1, .75, 1],
+    spectrum = sp.SpectralData([[1., 1., .75, 1.],
                                 [.5, .5, .65, .5],
                                 [.25, .25, .55, .25]],
                                [350., 450., 550., 650.])

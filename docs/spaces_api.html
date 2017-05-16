@@ -596,7 +596,7 @@ from Hunter&#8217;s L, a, and b.</em></p>
 <code class="xref py py-func docutils literal"><span class="pre">color_space()</span></code> decorator to register the name of the color space</p>
 <dl class="function">
 <dt id="chromathicity.spaces.color_space">
-<code class="descclassname">chromathicity.spaces.</code><code class="descname">color_space</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#color_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.color_space" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">chromathicity.spaces.</code><code class="descname">color_space</code><span class="sig-paren">(</span><em>name</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/manage.html#color_space"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.color_space" title="Permalink to this definition">¶</a></dt>
 <dd><p>Decorator that registers a class as a color space.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -607,8 +607,8 @@ from Hunter&#8217;s L, a, and b.</em></p>
 </tbody>
 </table>
 <p>The <code class="docutils literal"><span class="pre">color_space</span></code> decorator registers a class as a color space for color 
-conversions.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;test1&#39;</span><span class="p">)</span>
+conversions.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;test1&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">TestSpaceData</span><span class="p">(</span><span class="n">ColorSpaceDataImpl</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>

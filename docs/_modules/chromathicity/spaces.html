@@ -52,95 +52,22 @@
 
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">copy</span>
-<span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Tuple</span>
 
-<span class="kn">from</span> <span class="nn">bidict</span> <span class="k">import</span> <span class="n">bidict</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
-<span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">xyz2xyz</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">get_matching_axis</span><span class="p">,</span> \
-    <span class="n">construct_component_inds</span>
 <span class="kn">from</span> <span class="nn">chromathicity.chromadapt</span> <span class="k">import</span> <span class="p">(</span>
-    <span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">,</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">chromathicity.error</span> <span class="k">import</span> <span class="n">raise_not_implemented</span><span class="p">,</span> <span class="n">UndefinedColorSpaceError</span>
+    <span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">,</span>
+    <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">convert</span>
+<span class="kn">from</span> <span class="nn">chromathicity.error</span> <span class="k">import</span> <span class="n">raise_not_implemented</span>
 <span class="kn">from</span> <span class="nn">chromathicity.illuminant</span> <span class="k">import</span> <span class="n">get_default_illuminant</span><span class="p">,</span> <span class="n">Illuminant</span>
-<span class="kn">from</span> <span class="nn">chromathicity.mixin</span> <span class="k">import</span> <span class="n">SetGet</span>
+<span class="kn">from</span> <span class="nn">chromathicity.manage</span> <span class="k">import</span> <span class="n">get_space</span><span class="p">,</span> <span class="n">get_space_name</span><span class="p">,</span> <span class="n">color_space</span>
+<span class="kn">from</span> <span class="nn">chromathicity.observer</span> <span class="k">import</span> <span class="n">get_default_observer</span><span class="p">,</span> <span class="n">Observer</span>
 <span class="kn">from</span> <span class="nn">chromathicity.rgbspec</span> <span class="k">import</span> <span class="p">(</span><span class="n">get_default_rgb_specification</span><span class="p">,</span>
                                    <span class="n">RgbSpecification</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">chromathicity.observer</span> <span class="k">import</span> <span class="n">get_default_observer</span><span class="p">,</span> <span class="n">Observer</span>
-
-
-<span class="c1"># Stores all named color spaces</span>
-<span class="n">_space_name_to_type_map</span> <span class="o">=</span> <span class="p">{}</span>
-
-
-<span class="k">def</span> <span class="nf">get_space</span><span class="p">(</span><span class="n">space</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Get the space name and class associated with it</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">space</span> <span class="ow">in</span> <span class="n">_space_name_to_type_map</span><span class="p">:</span>
-            <span class="n">space_class</span> <span class="o">=</span> <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">space</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="nb">type</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="n">ColorSpaceData</span><span class="p">)</span> \
-            <span class="ow">and</span> <span class="n">space</span><span class="o">.</span><span class="n">__spacename__</span><span class="p">:</span>
-        <span class="n">space_class</span> <span class="o">=</span> <span class="n">space</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;Illegal color space type: {type(space).__name__}&#39;</span><span class="p">)</span>
-    <span class="n">space_name</span> <span class="o">=</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span>
-    <span class="k">return</span> <span class="n">space_name</span><span class="p">,</span> <span class="n">space_class</span>
-
-
-<span class="k">def</span> <span class="nf">get_space_class</span><span class="p">(</span><span class="n">space_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get the color space class associated with a color space&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">space_name</span> <span class="ow">in</span> <span class="n">_space_name_to_type_map</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">space_name</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space_name</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;get_space_class expected a str object, but got a &#39;</span>
-                        <span class="n">f</span><span class="s1">&#39;{type(space_name).__name__} instead.&#39;</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">get_space_name</span><span class="p">(</span><span class="n">space_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Get the color space name associated with a color space&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space_class</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">space_class</span><span class="p">,</span> <span class="n">ColorSpaceData</span><span class="p">)</span> \
-                <span class="ow">and</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space_class</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;get_space_name expected a type object, but got a &#39;</span>
-                        <span class="n">f</span><span class="s1">&#39;{type(space_class).__name__} instead.&#39;</span><span class="p">)</span>
-
-
-<div class="viewcode-block" id="color_space"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.color_space">[docs]</a><span class="k">def</span> <span class="nf">color_space</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Decorator that registers a class as a color space.</span>
-<span class="sd">    </span>
-<span class="sd">    :return: decorator that returns the class after registering it</span>
-<span class="sd">    </span>
-<span class="sd">    The ``color_space`` decorator registers a class as a color space for color </span>
-<span class="sd">    conversions.</span>
-<span class="sd">    </span>
-<span class="sd">    .. code-block:: python</span>
-<span class="sd">       </span>
-<span class="sd">       @color_space(&#39;test1&#39;)</span>
-<span class="sd">       class TestSpaceData(ColorSpaceDataImpl):</span>
-<span class="sd">           pass</span>
-<span class="sd">       </span>
-<span class="sd">   </span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="bp">cls</span><span class="o">.</span><span class="n">__spacename__</span> <span class="o">=</span> <span class="n">name</span>
-        <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
-        <span class="k">return</span> <span class="bp">cls</span>
-    <span class="k">return</span> <span class="n">decorator</span></div>
+<span class="kn">from</span> <span class="nn">chromathicity.util</span> <span class="k">import</span> <span class="n">SetGet</span><span class="p">,</span> <span class="n">construct_component_inds</span><span class="p">,</span> \
+    <span class="n">get_matching_axis</span>
 
 
 <div class="viewcode-block" id="ColorSpaceData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData">[docs]</a><span class="k">class</span> <span class="nc">ColorSpaceData</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -218,7 +145,8 @@
                  <span class="n">illuminant</span><span class="p">:</span> <span class="n">Illuminant</span><span class="o">=</span><span class="n">get_default_illuminant</span><span class="p">(),</span>
                  <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span><span class="o">=</span><span class="n">get_default_observer</span><span class="p">(),</span>
                  <span class="n">rgbs</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="o">=</span><span class="n">get_default_rgb_specification</span><span class="p">(),</span>
-                 <span class="n">caa</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="o">=</span><span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">()):</span>
+                 <span class="n">caa</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="o">=</span>
+                 <span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">()):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        </span>
 <span class="sd">        :param data: the color space data to contain</span>
@@ -410,7 +338,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">c</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;spectrum&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;Spectrum&#39;</span><span class="p">)</span>
 <div class="viewcode-block" id="SpectralData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.SpectralData">[docs]</a><span class="k">class</span> <span class="nc">SpectralData</span><span class="p">(</span><span class="n">ColorSpaceDataImpl</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Contains raw reflectance spectral data</span>
@@ -502,6 +430,8 @@
 <span class="sd">        :param observer: The new observer</span>
 <span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">xyz2xyz</span>
+
         <span class="n">source_white_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span><span class="o">.</span><span class="n">get_white_point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observer</span><span class="p">)</span>
         <span class="n">destination_white_point</span> <span class="o">=</span> <span class="n">illuminant</span><span class="o">.</span><span class="n">get_white_point</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">source_white_point</span><span class="p">,</span> <span class="n">destination_white_point</span><span class="p">):</span>
@@ -621,7 +551,7 @@
 <span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;CIELCH&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">LchData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Represents the CIELCh_ab color space.</span>
+<span class="sd">    Represents the CIELCh color space.</span>
 <span class="sd">     </span>
 <span class="sd">    From `Wikipedia &lt;https://en.wikipedia.org/wiki/Lab_color_space#</span>
 <span class="sd">    Cylindrical_representation:_CIELCh_or_CIEHLC&gt;`_:</span>
@@ -673,7 +603,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">caa</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;lrgb&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;lRGB&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">LinearRgbData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents data that is uncompanded RGB</span>
@@ -681,22 +611,22 @@
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;rgb&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;RGB&#39;</span><span class="p">)</span>
 <div class="viewcode-block" id="RgbData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.RgbData">[docs]</a><span class="k">class</span> <span class="nc">RgbData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;hsl&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;HSL&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">HslData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;hsi&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;HSI&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">HsiData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;hcy&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;HCY&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">HcyData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>

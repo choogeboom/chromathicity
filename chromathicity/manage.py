@@ -40,7 +40,6 @@ from networkx import DiGraph, shortest_path, NetworkXNoPath
 
 from chromathicity.error import UndefinedConversionError, \
     UndefinedColorSpaceError
-from chromathicity.spaces import ColorSpaceData
 
 logger = getLogger(__name__)
 
@@ -164,8 +163,7 @@ def get_space(space: Union[str, type]):
             space_class = _space_name_to_type_map[space]
         else:
             raise UndefinedColorSpaceError(space)
-    elif isinstance(space, type) and issubclass(space, ColorSpaceData) \
-            and space.__spacename__:
+    elif hasattr(space, '__spacename__') and space.__spacename__:
         space_class = space
     else:
         raise TypeError(f'Illegal color space type: {type(space).__name__}')
@@ -195,8 +193,7 @@ def get_space_class(space_name: str):
 def get_space_name(space_class: type):
     """Get the color space name associated with a color space"""
     if isinstance(space_class, type):
-        if issubclass(space_class, ColorSpaceData) \
-                and space_class.__spacename__:
+        if hasattr(space_class, '__spacename__') and space_class.__spacename__:
             return space_class.__spacename__
         else:
             raise UndefinedColorSpaceError(space_class)

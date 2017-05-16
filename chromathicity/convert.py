@@ -46,7 +46,7 @@ def lab2xyzr(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('CIELAB', 'lchab')
+@color_conversion('CIELAB', 'CIELCH')
 def lab2lchab(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert L*a*b* to LCh
@@ -72,7 +72,7 @@ def lab2lchab(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('lchab', 'CIELAB')
+@color_conversion('CIELCH', 'CIELAB')
 def lchab2lab(lch: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Converts LCh to L*a*b*
@@ -97,7 +97,7 @@ def lchab2lab(lch: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('lrgb', 'rgb')
+@color_conversion('lRGB', 'RGB')
 def lrgb2rgb(lrgb: np.ndarray, *, rgbs: RgbSpecification=None,
              **kwargs) -> np.ndarray:
     """
@@ -112,7 +112,7 @@ def lrgb2rgb(lrgb: np.ndarray, *, rgbs: RgbSpecification=None,
     return rgbs.compand(lrgb)
 
 
-@color_conversion('lrgb', 'xyz')
+@color_conversion('lRGB', 'CIEXYZ')
 def lrgb2xyz(lrgb: np.ndarray,
              *,
              axis: int=None,
@@ -177,7 +177,7 @@ def lrgb2xyz(lrgb: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('rgb', 'lrgb')
+@color_conversion('RGB', 'lRGB')
 def rgb2lrgb(rgb: np.ndarray,
              *,
              rgbs: RgbSpecification=None, **kwargs) -> np.ndarray:
@@ -194,7 +194,7 @@ def rgb2lrgb(rgb: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('rgb', 'hsl')
+@color_conversion('RGB', 'HSL')
 def rgb2hsl(rgb: np.ndarray,
             *,
             axis: int=None,
@@ -227,7 +227,7 @@ def rgb2hsl(rgb: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('hsl', 'rgb')
+@color_conversion('HSL', 'RGB')
 def hsl2rgb(hsl: np.ndarray,
             *,
             axis: int=None,
@@ -262,7 +262,7 @@ def hsl2rgb(hsl: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('rgb', 'hsi')
+@color_conversion('RGB', 'HSI')
 def rgb2hsi(rgb: np.ndarray,
             *,
             axis: int=None,
@@ -296,7 +296,7 @@ def rgb2hsi(rgb: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('hsi', 'rgb')
+@color_conversion('HSI', 'RGB')
 def hsi2rgb(hsi: np.ndarray,
             *,
             axis: int=None,
@@ -327,7 +327,7 @@ def hsi2rgb(hsi: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('rgb', 'hsv')
+@color_conversion('RGB', 'HSV')
 def rgb2hsv(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert from RGB to Hue Saturation Value (HSV)
@@ -353,7 +353,7 @@ def rgb2hsv(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     return hsv
 
 
-@color_conversion('hsv', 'rgb')
+@color_conversion('HSV', 'RGB')
 def hsv2rgb(hsv: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert from HSV to RGB
@@ -380,7 +380,7 @@ def hsv2rgb(hsv: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
         return rgb1 + little_m
 
 
-@color_conversion('rgb', 'hcy')
+@color_conversion('RGB', 'HCY')
 def rgb2hcy(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert from RGB to Hue, Chroma, Luma (Y'_601)
@@ -405,7 +405,7 @@ def rgb2hcy(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     return hcy
 
 
-@color_conversion('hcy', 'rgb')
+@color_conversion('HCY', 'RGB')
 def hcy2rgb(hcy: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     
@@ -434,6 +434,7 @@ def hcy2rgb(hcy: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 def _compute_chroma(rgb: np.ndarray,
                     axis: int) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Compute the chroma for an RGB triple"""
     big_m = np.max(rgb, axis=axis, keepdims=True)
     little_m = np.min(rgb, axis=axis, keepdims=True)
     chroma = big_m - little_m
@@ -486,7 +487,7 @@ def _compute_rgb1(shape, inds, h_prime, x, chroma) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('spectrum', 'xyz')
+@color_conversion('Spectrum', 'CIEXYZ')
 def spectrum2xyz(spectrum: np.ndarray,
                  wavelengths: np.ndarray,
                  *,
@@ -541,7 +542,7 @@ def spectrum2xyz(spectrum: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('xyy', 'xyz')
+@color_conversion('xyY', 'CIEXYZ')
 def xyy2xyz(xyy, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     converts from xyY to XYZ
@@ -568,7 +569,7 @@ def xyy2xyz(xyy, *, axis: int=None, **kwargs) -> np.ndarray:
     return xyz
 
 
-@color_conversion('xyz', 'lrgb')
+@color_conversion('CIEXYZ', 'lRGB')
 def xyz2lrgb(xyz: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=None,
@@ -631,7 +632,7 @@ def xyz2lrgb(xyz: np.ndarray, *,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('xyz', 'xyy')
+@color_conversion('CIEXYZ', 'xyY')
 def xyz2xyy(xyz: np.ndarray, *,
             axis: int=None,
             illuminant: Illuminant=None,
@@ -724,7 +725,7 @@ def xyz2xyz(source_xyz: np.ndarray,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('xyz', 'xyzr')
+@color_conversion('CIEXYZ', 'XYZ_r')
 def xyz2xyzr(xyz: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=get_default_illuminant(),
@@ -747,7 +748,7 @@ def xyz2xyzr(xyz: np.ndarray, *,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('xyzr', 'CIELAB')
+@color_conversion('XYZ_r', 'CIELAB')
 def xyzr2lab(xyzr: np.ndarray, *,
              axis: int=None, **kwargs) -> np.ndarray:
     """
@@ -776,7 +777,7 @@ def xyzr2lab(xyzr: np.ndarray, *,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('xyzr', 'xyz')
+@color_conversion('XYZ_r', 'CIEXYZ')
 def xyzr2xyz(xyzr: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=None,
@@ -807,7 +808,11 @@ def xyzr2xyz(xyzr: np.ndarray, *,
 
 def convert(data: np.ndarray, from_space: str, to_space: str, *args,
             **kwargs) -> np.ndarray:
-    """ Convert data between spaces """
+    """
+    Convert data between spaces
+    
+    
+    """
     conversion_path = get_conversion_path(from_space, to_space)
     for do_conversion_step in conversion_path:
         data = do_conversion_step(data, *args, **kwargs)

@@ -7,7 +7,7 @@
 
 
 from abc import ABC, abstractmethod
-from typing import Union, Iterable, Tuple
+from typing import Union, Iterable, Tuple, Any
 
 import numpy as np
 
@@ -293,7 +293,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         self._caa = c
 
 
-@color_space('spectrum')
+@color_space('Spectrum')
 class SpectralData(ColorSpaceDataImpl):
     """
     Contains raw reflectance spectral data
@@ -313,7 +313,7 @@ class SpectralData(ColorSpaceDataImpl):
     :param caa: The chromatic adaptation algorithm.
     :type caa: ChromaticAdaptationAlgorithm
     """
-    def __init__(self, data: Union[np.ndarray, Iterable[float], ColorSpaceData],
+    def __init__(self, data: Union[np.ndarray, Iterable[Any], ColorSpaceData],
                  wavelengths: Union[np.ndarray, Iterable[float]]=None,
                  axis=None,
                  *args,
@@ -418,7 +418,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
         return self
 
 
-@color_space('XYZ')
+@color_space('CIEXYZ')
 class XyzData(WhitePointSensitive):
     """
     Represents data from the CIE XYZ color space. 

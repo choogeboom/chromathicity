@@ -81,7 +81,7 @@ class RgbSpecification(ABC):
         # import the convert function here to avoid circular imports
         from chromathicity.convert import convert
         wp = self.white_point
-        xyz = convert(self.xyy, 'xyy', 'xyz', axis=1)
+        xyz = convert(self.xyy, 'xyY', 'CIEXYZ', axis=1)
         xyz_normalized = xyz / xyz[:, 1:2]
         s = np.linalg.solve(xyz_normalized.T, wp[:, np.newaxis])
         return s * xyz_normalized

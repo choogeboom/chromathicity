@@ -140,11 +140,11 @@ class TestXyz:
         obs = Standard()
         xyz = np.array([.2253731, .18418652, .09526464])
         expected_lab = np.array([50., 25., 25.])
-        actual_lab = convert.convert(xyz, 'xyz', 'lab',
+        actual_lab = convert.convert(xyz, 'CIEXYZ', 'CIELAB',
                                      illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_lab, expected_lab, rtol=1e-5,
                                    atol=1e-14)
-        actual_xyz = convert.convert(actual_lab, 'lab', 'xyz',
+        actual_xyz = convert.convert(actual_lab, 'CIELAB', 'CIEXYZ',
                                      illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_xyz, xyz, rtol=1e-5, atol=1e-14)
 
@@ -153,11 +153,11 @@ class TestXyz:
         obs = Standard()
         xyz = np.array([0.008, 0.009, 0.007])
         expected_lab = np.array([8.1289723, -2.264535, 4.001228])
-        actual_lab = convert.convert(xyz, 'xyz', 'lab',
+        actual_lab = convert.convert(xyz, 'CIEXYZ', 'CIELAB',
                                      illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_lab, expected_lab, rtol=1e-5,
                                    atol=1e-14)
-        actual_xyz = convert.convert(actual_lab, 'lab', 'xyz',
+        actual_xyz = convert.convert(actual_lab, 'CIELAB', 'CIEXYZ',
                                      illuminant=ill, observer=obs)
         np.testing.assert_allclose(actual_xyz, xyz, rtol=1e-5, atol=1e-14)
 
@@ -253,11 +253,11 @@ class TestLRgb:
 class TestConvert:
     def test_illegal_conversion(self):
         with raises(UndefinedConversionError):
-            convert.convert(np.array([1., 1., 1.]), 'xyz', 'spectrum')
+            convert.convert(np.array([1., 1., 1.]), 'CIEXYZ', 'Spectrum')
 
     def test_undefined_space(self):
         with raises(UndefinedColorSpaceError):
-            convert.convert(np.ones((3,)), 'xyz', 'pizza')
+            convert.convert(np.ones((3,)), 'CIEXYZ', 'pizza')
 
 
 def run_forward_reverse(convert_forward, convert_reverse, source, destination,
