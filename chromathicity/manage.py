@@ -34,11 +34,13 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 from abc import ABC, abstractmethod
 from logging import getLogger
+from typing import Union
 
 from networkx import DiGraph, shortest_path, NetworkXNoPath
 
 from chromathicity.error import UndefinedConversionError, \
     UndefinedColorSpaceError
+from chromathicity.spaces import ColorSpaceData
 
 logger = getLogger(__name__)
 
@@ -57,7 +59,8 @@ class ConversionManager(ABC):
         """
         self.registered_color_spaces.add(start_type)
         self.registered_color_spaces.add(target_type)
-        logger.debug('Registered conversion from %s to %s', start_type, target_type)
+        logger.debug('Registered conversion from %s to %s', start_type,
+                     target_type)
 
     @abstractmethod
     def get_conversion_path(self, start_type, target_type):
@@ -129,8 +132,8 @@ def color_conversion(from_space_name, target_space_name):
     it can be used to perform color space transformations between color 
     spaces that do not have direct conversion functions (e.g., Luv to CMYK). 
     
-    :param from_space_name: Starting color space name
-    :param target_space_name: Target color space name
+    :param from_space_name: Starting color space name or type
+    :param target_space_name: Target color space name or type
     """
 
     def decorator(f):
@@ -146,3 +149,80 @@ def color_conversion(from_space_name, target_space_name):
 def get_conversion_path(from_space, to_space):
     """ Returns a list of functions to apply to perform the conversion """
     return _conversion_manager.get_conversion_path(from_space, to_space)
+
+
+# Stores all named color spaces
+_space_name_to_type_map = {}
+
+
+def get_space(space: Union[str, type]):
+    """
+    Get the space name and class associated with it
+    """
+    if isinstance(space, str):
+        if space in _space_name_to_type_map:
+            space_class = _space_name_to_type_map[space]
+        else:
+            raise UndefinedColorSpaceError(space)
+    elif isinstance(space, type) and issubclass(space, ColorSpaceData) \
+            and space.__spacename__:
+        space_class = space
+    else:
+        raise TypeError(f'Illegal color space type: {type(space).__name__}')
+    space_name = space_class.__spacename__
+    return space_name, space_class
+
+
+def get_space_class(space_name: str):
+    """
+    Get the color space class associated with a color space
+    
+    :param space_name: The name of the space
+    
+    >>> get_space_class('XYZ')
+    XyzData
+    """
+    if isinstance(space_name, str):
+        if space_name in _space_name_to_type_map:
+            return _space_name_to_type_map[space_name]
+        else:
+            raise UndefinedColorSpaceError(space_name)
+    else:
+        raise TypeError('get_space_class expected a str object, but got a '
+                        f'{type(space_name).__name__} instead.')
+
+
+def get_space_name(space_class: type):
+    """Get the color space name associated with a color space"""
+    if isinstance(space_class, type):
+        if issubclass(space_class, ColorSpaceData) \
+                and space_class.__spacename__:
+            return space_class.__spacename__
+        else:
+            raise UndefinedColorSpaceError(space_class)
+    else:
+        raise TypeError('get_space_name expected a type object, but got a '
+                        f'{type(space_class).__name__} instead.')
+
+
+def color_space(name):
+    """
+    Decorator that registers a class as a color space.
+    
+    :return: decorator that returns the class after registering it
+    
+    The ``color_space`` decorator registers a class as a color space for color 
+    conversions.::
+    
+       @color_space('test1')
+       class TestSpaceData(ColorSpaceDataImpl):
+           pass
+       
+   
+    """
+
+    def decorator(cls: type):
+        cls.__spacename__ = name
+        _space_name_to_type_map[name] = cls
+        return cls
+    return decorator

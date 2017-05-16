@@ -7,100 +7,22 @@
 
 
 from abc import ABC, abstractmethod
-from copy import copy
-import sys
 from typing import Union, Iterable, Tuple
 
-from bidict import bidict
 import numpy as np
 
-from chromathicity.convert import xyz2xyz, convert, get_matching_axis, \
-    construct_component_inds
 from chromathicity.chromadapt import (
-    get_default_chromatic_adaptation_algorithm, ChromaticAdaptationAlgorithm)
-from chromathicity.error import raise_not_implemented, UndefinedColorSpaceError
+    get_default_chromatic_adaptation_algorithm,
+    ChromaticAdaptationAlgorithm)
+from chromathicity.convert import convert
+from chromathicity.error import raise_not_implemented
 from chromathicity.illuminant import get_default_illuminant, Illuminant
-from chromathicity.util import SetGet
+from chromathicity.manage import get_space, get_space_name, color_space
+from chromathicity.observer import get_default_observer, Observer
 from chromathicity.rgbspec import (get_default_rgb_specification,
                                    RgbSpecification)
-from chromathicity.observer import get_default_observer, Observer
-
-
-# Stores all named color spaces
-_space_name_to_type_map = {}
-
-
-def get_space(space: Union[str, type]):
-    """
-    Get the space name and class associated with it
-    """
-    if isinstance(space, str):
-        if space in _space_name_to_type_map:
-            space_class = _space_name_to_type_map[space]
-        else:
-            raise UndefinedColorSpaceError(space)
-    elif isinstance(space, type) and issubclass(space, ColorSpaceData) \
-            and space.__spacename__:
-        space_class = space
-    else:
-        raise TypeError(f'Illegal color space type: {type(space).__name__}')
-    space_name = space_class.__spacename__
-    return space_name, space_class
-
-
-def get_space_class(space_name: str):
-    """
-    Get the color space class associated with a color space
-    
-    :param space_name: The name of the space
-    
-    >>> get_space_class('XYZ')
-    XyzData
-    """
-    if isinstance(space_name, str):
-        if space_name in _space_name_to_type_map:
-            return _space_name_to_type_map[space_name]
-        else:
-            raise UndefinedColorSpaceError(space_name)
-    else:
-        raise TypeError('get_space_class expected a str object, but got a '
-                        f'{type(space_name).__name__} instead.')
-
-
-def get_space_name(space_class: type):
-    """Get the color space name associated with a color space"""
-    if isinstance(space_class, type):
-        if issubclass(space_class, ColorSpaceData) \
-                and space_class.__spacename__:
-            return space_class.__spacename__
-        else:
-            raise UndefinedColorSpaceError(space_class)
-    else:
-        raise TypeError('get_space_name expected a type object, but got a '
-                        f'{type(space_class).__name__} instead.')
-
-
-def color_space(name):
-    """
-    Decorator that registers a class as a color space.
-    
-    :return: decorator that returns the class after registering it
-    
-    The ``color_space`` decorator registers a class as a color space for color 
-    conversions.::
-    
-       @color_space('test1')
-       class TestSpaceData(ColorSpaceDataImpl):
-           pass
-       
-   
-    """
-
-    def decorator(cls: type):
-        cls.__spacename__ = name
-        _space_name_to_type_map[name] = cls
-        return cls
-    return decorator
+from chromathicity.util import SetGet, construct_component_inds, \
+    get_matching_axis
 
 
 class ColorSpaceData(ABC):
@@ -178,7 +100,8 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                  illuminant: Illuminant=get_default_illuminant(),
                  observer: Observer=get_default_observer(),
                  rgbs: RgbSpecification=get_default_rgb_specification(),
-                 caa: ChromaticAdaptationAlgorithm=get_default_chromatic_adaptation_algorithm()):
+                 caa: ChromaticAdaptationAlgorithm=
+                 get_default_chromatic_adaptation_algorithm()):
         """
         
         :param data: the color space data to contain
@@ -462,6 +385,8 @@ class WhitePointSensitive(ColorSpaceDataImpl):
         :param observer: The new observer
         :return: self
         """
+        from chromathicity.convert import xyz2xyz
+
         source_white_point = self._illuminant.get_white_point(self._observer)
         destination_white_point = illuminant.get_white_point(observer)
         if np.allclose(source_white_point, destination_white_point):

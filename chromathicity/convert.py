@@ -2,17 +2,18 @@ from typing import Tuple
 
 import numpy as np
 import scipy.integrate as integrate
+
 from chromathicity.chromadapt import (
     ChromaticAdaptationAlgorithm,
     get_default_chromatic_adaptation_algorithm)
 from chromathicity.illuminant import Illuminant, get_default_illuminant
+from chromathicity.manage import color_conversion, get_conversion_path
+from chromathicity.observer import Observer, get_default_observer
 from chromathicity.rgbspec import (RgbSpecification,
                                    get_default_rgb_specification)
-from chromathicity.manage import color_conversion, get_conversion_path
-
-from chromathicity.observer import Observer, get_default_observer
-
 # Constants used for L*a*b* conversions
+from chromathicity.util import construct_component_inds, get_matching_axis
+
 LAB_EPS = 0.008856
 LAB_KAPPA = 903.3
 
@@ -802,45 +803,6 @@ def xyzr2xyz(xyzr: np.ndarray, *,
                       for dim in range(len(xyzr.shape)))
     white_point = illuminant.get_white_point(observer).reshape(new_shape)
     return xyzr * white_point
-
-
-def get_matching_axis(shape: Tuple, length: int) -> int:
-    """
-    Infers the correct axis to use
-    
-    :param shape: the shape of the input
-    :param length: the desired length of the axis
-    :return: the correct axis. If multiple axes match, then it returns the last 
-             one.
-    """
-    # noinspection PyUnresolvedReferences
-    axis_candidates = np.nonzero(np.array(shape) == length)[0]
-    if len(axis_candidates) == 0:
-        raise ValueError('Unable to infer axis tue to shape mismatch: ' 
-                         '{} =/= {}.'.format(shape, length))
-    return axis_candidates[-1]
-
-
-def construct_component_inds(axis: int,
-                             n_dims: int,
-                             n_components: int,
-                             min_ndims: int=2) -> Tuple[Tuple]:
-    """
-    Construct a tuple of tuples, where each element extracts the correct 
-    component values.
-    
-    :param axis: 
-    :param n_dims: 
-    :param n_components: 
-    :return: 
-    """
-    # noinspection PyTypeChecker
-    return tuple(
-        tuple(slice(i, i+1)
-              if dim == axis
-              else (slice(None) if dim < n_dims else np.newaxis)
-              for dim in range(max(n_dims, min_ndims)))
-        for i in range(n_components))
 
 
 def convert(data: np.ndarray, from_space: str, to_space: str, *args,
