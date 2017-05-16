@@ -6,7 +6,7 @@ from bidict import bidict
 
 from chromathicity.error import raise_not_implemented
 from chromathicity.math import interp1
-from chromathicity.mixin import SetGet
+from chromathicity.util import SetGet
 from chromathicity.observer import Observer, Standard, get_default_observer
 
 

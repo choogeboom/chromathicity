@@ -4,7 +4,7 @@ import numpy as np
 
 from chromathicity.illuminant import Illuminant, get_default_illuminant, D
 from chromathicity.error import raise_not_implemented
-from chromathicity.mixin import SetGet
+from chromathicity.util import SetGet
 from chromathicity.observer import Observer, get_default_observer, Standard
 
 

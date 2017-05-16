@@ -71,9 +71,6 @@
 <span class="kn">from</span> <span class="nn">chromathicity.observer</span> <span class="k">import</span> <span class="n">get_default_observer</span><span class="p">,</span> <span class="n">Observer</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;get_space&#39;</span><span class="p">,</span> <span class="s1">&#39;get_space_class&#39;</span><span class="p">,</span> <span class="s1">&#39;get_space_name&#39;</span><span class="p">]</span>
-
-
 <span class="c1"># Stores all named color spaces</span>
 <span class="n">_space_name_to_type_map</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -121,22 +118,18 @@
                         <span class="n">f</span><span class="s1">&#39;{type(space_class).__name__} instead.&#39;</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">color_space</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+<div class="viewcode-block" id="color_space"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.color_space">[docs]</a><span class="k">def</span> <span class="nf">color_space</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Decorator that registers a class as a color space. Any number of aliases </span>
-<span class="sd">    can be passed.</span>
+<span class="sd">    Decorator that registers a class as a color space.</span>
 <span class="sd">    </span>
 <span class="sd">    :return: decorator that returns the class after registering it</span>
-<span class="sd">    </span>
-<span class="sd">    Example</span>
-<span class="sd">    -------</span>
 <span class="sd">    </span>
 <span class="sd">    The ``color_space`` decorator registers a class as a color space for color </span>
 <span class="sd">    conversions.</span>
 <span class="sd">    </span>
 <span class="sd">    .. code-block:: python</span>
 <span class="sd">       </span>
-<span class="sd">       @color_space(&#39;test1&#39;, &#39;test2&#39;)</span>
+<span class="sd">       @color_space(&#39;test1&#39;)</span>
 <span class="sd">       class TestSpaceData(ColorSpaceDataImpl):</span>
 <span class="sd">           pass</span>
 <span class="sd">       </span>
@@ -144,12 +137,10 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="nb">type</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
-            <span class="bp">cls</span><span class="o">.</span><span class="n">__spacename__</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
-                <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">name</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span> <span class="o">=</span> <span class="bp">cls</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">__spacename__</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
         <span class="k">return</span> <span class="bp">cls</span>
-    <span class="k">return</span> <span class="n">decorator</span>
+    <span class="k">return</span> <span class="n">decorator</span></div>
 
 
 <div class="viewcode-block" id="ColorSpaceData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData">[docs]</a><span class="k">class</span> <span class="nc">ColorSpaceData</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
@@ -349,10 +340,21 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The stored color data</span>
+<span class="sd">        </span>
+<span class="sd">        Indexing into the space data instance is equivalent to indexing into the</span>
+<span class="sd">        data itself::</span>
+<span class="sd">        </span>
+<span class="sd">            space.data[inds]</span>
+<span class="sd">            </span>
+<span class="sd">        is the same as::</span>
+<span class="sd">        </span>
+<span class="sd">            space[inds]&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">axis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The axis in the data array that the color components lie along.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span>
 
     <span class="nd">@axis</span><span class="o">.</span><span class="n">setter</span>
@@ -369,6 +371,9 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Illuminant</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The illuminant. This combined with the </span>
+<span class="sd">        :py:attr:`~ColorSpaceDataImpl.observer` </span>
+<span class="sd">        determines the reference white point of the space.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span>
 
     <span class="nd">@illuminant</span><span class="o">.</span><span class="n">setter</span>
@@ -377,6 +382,9 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">observer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Observer</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The observer. This combined with the </span>
+<span class="sd">        :py:attr:`~ColorSpaceDataImpl.illuminant` </span>
+<span class="sd">        determines the reference white point of the space.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span>
 
     <span class="nd">@observer</span><span class="o">.</span><span class="n">setter</span>
@@ -385,6 +393,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RgbSpecification</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The RGB color space specification&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span>
 
     <span class="nd">@rgbs</span><span class="o">.</span><span class="n">setter</span>
@@ -393,6 +402,7 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">caa</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The chromatic adaptation algorithm.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span>
 
     <span class="nd">@caa</span><span class="o">.</span><span class="n">setter</span>
@@ -448,10 +458,12 @@
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The number of wavelengths in the data&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span><span class="o">.</span><span class="n">size</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">wavelengths</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">wavelengths</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;The wavelengths that correspond to the data&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wavelengths</span>
 
     <span class="k">def</span> <span class="nf">_get_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -461,7 +473,7 @@
 
 
 <span class="c1"># noinspection PyMethodOverriding</span>
-<span class="k">class</span> <span class="nc">WhitePointSensitive</span><span class="p">(</span><span class="n">ColorSpaceDataImpl</span><span class="p">):</span>
+<div class="viewcode-block" id="WhitePointSensitive"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.WhitePointSensitive">[docs]</a><span class="k">class</span> <span class="nc">WhitePointSensitive</span><span class="p">(</span><span class="n">ColorSpaceDataImpl</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class implements automatic chromatic adaptation whenever the white </span>
 <span class="sd">    point of the illuminant/observer combination changes.</span>
@@ -481,13 +493,21 @@
     <span class="k">def</span> <span class="nf">observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_white_point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span><span class="p">,</span> <span class="n">obs</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">change_white_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
+<div class="viewcode-block" id="WhitePointSensitive.change_white_point"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.WhitePointSensitive.change_white_point">[docs]</a>    <span class="k">def</span> <span class="nf">change_white_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the reference white point of the space by setting a new </span>
+<span class="sd">        illuminant and observer</span>
+<span class="sd">        </span>
+<span class="sd">        :param illuminant: The new illuminant</span>
+<span class="sd">        :param observer: The new observer</span>
+<span class="sd">        :return: self</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">source_white_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span><span class="o">.</span><span class="n">get_white_point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observer</span><span class="p">)</span>
         <span class="n">destination_white_point</span> <span class="o">=</span> <span class="n">illuminant</span><span class="o">.</span><span class="n">get_white_point</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">source_white_point</span><span class="p">,</span> <span class="n">destination_white_point</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span> <span class="o">=</span> <span class="n">illuminant</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span> <span class="o">=</span> <span class="n">observer</span>
-            <span class="k">return</span>
+            <span class="k">return</span> <span class="bp">self</span>
 
         <span class="n">source_xyz</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span>
                              <span class="n">from_space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__spacename__</span><span class="p">,</span>
@@ -510,9 +530,10 @@
                              <span class="n">caa</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_caa</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span> <span class="o">=</span> <span class="n">illuminant</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span> <span class="o">=</span> <span class="n">observer</span>
+        <span class="k">return</span> <span class="bp">self</span></div></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;xyz&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;XYZ&#39;</span><span class="p">)</span>
 <div class="viewcode-block" id="XyzData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.XyzData">[docs]</a><span class="k">class</span> <span class="nc">XyzData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents data from the CIE XYZ color space. </span>
@@ -537,7 +558,7 @@
     <span class="k">pass</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;xyy&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;xyY&#39;</span><span class="p">)</span>
 <div class="viewcode-block" id="XyyData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.XyyData">[docs]</a><span class="k">class</span> <span class="nc">XyyData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents data from the CIE xyY color space</span>
@@ -563,7 +584,7 @@
     <span class="k">pass</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;xyzr&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;XYZ_r&#39;</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">NormalizedXyzData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This space is the CIE XYZ space, normalized by the white point</span>
@@ -571,7 +592,7 @@
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;lab&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;CIELAB&#39;</span><span class="p">)</span>
 <div class="viewcode-block" id="LabData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.LabData">[docs]</a><span class="k">class</span> <span class="nc">LabData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents the CIE L*a*b* color space.</span>
@@ -597,8 +618,8 @@
     <span class="k">pass</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;lchab&#39;</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">LchabData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;CIELCH&#39;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">LchData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents the CIELCh_ab color space.</span>
 <span class="sd">     </span>
@@ -615,11 +636,13 @@
 
 
 <span class="c1"># noinspection PyMethodOverriding</span>
-<span class="k">class</span> <span class="nc">RgbsSensitive</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
+<div class="viewcode-block" id="RgbsSensitive"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.RgbsSensitive">[docs]</a><span class="k">class</span> <span class="nc">RgbsSensitive</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This class represents spaces that are sensitive to the choice of the </span>
-<span class="sd">    `RgbSpecification`, and will adapt the color data if the </span>
-<span class="sd">    `rgbs`:instance_attribute property changes </span>
+<span class="sd">    :class:`RgbSpecification`, and will adapt the color data if the </span>
+<span class="sd">    :attr:`~RgbsSensitive.rgbs` property value changes.</span>
+<span class="sd">     </span>
+<span class="sd">    Any Color space representing RGB data should extend this class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="nd">@WhitePointSensitive</span><span class="o">.</span><span class="n">rgbs</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
@@ -647,7 +670,7 @@
                              <span class="n">rgbs</span><span class="o">=</span><span class="n">rgbs</span><span class="p">,</span>
                              <span class="n">caa</span><span class="o">=</span><span class="n">caa</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span> <span class="o">=</span> <span class="n">rgbs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">caa</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">caa</span></div>
 
 
 <span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;lrgb&#39;</span><span class="p">)</span>

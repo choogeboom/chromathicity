@@ -20,13 +20,10 @@ from chromathicity.chromadapt import (
     get_default_chromatic_adaptation_algorithm, ChromaticAdaptationAlgorithm)
 from chromathicity.error import raise_not_implemented, UndefinedColorSpaceError
 from chromathicity.illuminant import get_default_illuminant, Illuminant
-from chromathicity.mixin import SetGet
+from chromathicity.util import SetGet
 from chromathicity.rgbspec import (get_default_rgb_specification,
                                    RgbSpecification)
 from chromathicity.observer import get_default_observer, Observer
-
-
-__all__ = ['get_space', 'get_space_class', 'get_space_name']
 
 
 # Stores all named color spaces
@@ -52,7 +49,14 @@ def get_space(space: Union[str, type]):
 
 
 def get_space_class(space_name: str):
-    """Get the color space class associated with a color space"""
+    """
+    Get the color space class associated with a color space
+    
+    :param space_name: The name of the space
+    
+    >>> get_space_class('XYZ')
+    XyzData
+    """
     if isinstance(space_name, str):
         if space_name in _space_name_to_type_map:
             return _space_name_to_type_map[space_name]
@@ -76,22 +80,16 @@ def get_space_name(space_class: type):
                         f'{type(space_class).__name__} instead.')
 
 
-def color_space(*args):
+def color_space(name):
     """
-    Decorator that registers a class as a color space. Any number of aliases 
-    can be passed.
+    Decorator that registers a class as a color space.
     
     :return: decorator that returns the class after registering it
     
-    Example
-    -------
-    
     The ``color_space`` decorator registers a class as a color space for color 
-    conversions.
+    conversions.::
     
-    .. code-block:: python
-       
-       @color_space('test1', 'test2')
+       @color_space('test1')
        class TestSpaceData(ColorSpaceDataImpl):
            pass
        
@@ -99,10 +97,8 @@ def color_space(*args):
     """
 
     def decorator(cls: type):
-        if args:
-            cls.__spacename__ = args[0].lower()
-            for name in args:
-                _space_name_to_type_map[name.lower()] = cls
+        cls.__spacename__ = name
+        _space_name_to_type_map[name] = cls
         return cls
     return decorator
 
@@ -304,10 +300,21 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @property
     def data(self) -> np.ndarray:
+        """The stored color data
+        
+        Indexing into the space data instance is equivalent to indexing into the
+        data itself::
+        
+            space.data[inds]
+            
+        is the same as::
+        
+            space[inds]"""
         return self._data
 
     @property
     def axis(self) -> int:
+        """The axis in the data array that the color components lie along."""
         return self._axis
 
     @axis.setter
@@ -324,6 +331,9 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @property
     def illuminant(self) -> Illuminant:
+        """The illuminant. This combined with the 
+        :py:attr:`~ColorSpaceDataImpl.observer` 
+        determines the reference white point of the space."""
         return self._illuminant
 
     @illuminant.setter
@@ -332,6 +342,9 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @property
     def observer(self) -> Observer:
+        """The observer. This combined with the 
+        :py:attr:`~ColorSpaceDataImpl.illuminant` 
+        determines the reference white point of the space."""
         return self._observer
 
     @observer.setter
@@ -340,6 +353,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @property
     def rgbs(self) -> RgbSpecification:
+        """The RGB color space specification"""
         return self._rgbs
 
     @rgbs.setter
@@ -348,6 +362,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @property
     def caa(self) -> ChromaticAdaptationAlgorithm:
+        """The chromatic adaptation algorithm."""
         return self._caa
 
     @caa.setter
@@ -403,10 +418,12 @@ class SpectralData(ColorSpaceDataImpl):
 
     @property
     def num_components(self):
+        """The number of wavelengths in the data"""
         return self.wavelengths.size
 
     @property
-    def wavelengths(self):
+    def wavelengths(self) -> np.ndarray:
+        """The wavelengths that correspond to the data"""
         return self._wavelengths
 
     def _get_kwargs(self):
@@ -437,12 +454,20 @@ class WhitePointSensitive(ColorSpaceDataImpl):
         self.change_white_point(self._illuminant, obs)
 
     def change_white_point(self, illuminant: Illuminant, observer: Observer):
+        """
+        Change the reference white point of the space by setting a new 
+        illuminant and observer
+        
+        :param illuminant: The new illuminant
+        :param observer: The new observer
+        :return: self
+        """
         source_white_point = self._illuminant.get_white_point(self._observer)
         destination_white_point = illuminant.get_white_point(observer)
         if np.allclose(source_white_point, destination_white_point):
             self._illuminant = illuminant
             self._observer = observer
-            return
+            return self
 
         source_xyz = convert(self._data,
                              from_space=self.__spacename__,
@@ -465,9 +490,10 @@ class WhitePointSensitive(ColorSpaceDataImpl):
                              caa=self._caa)
         self._illuminant = illuminant
         self._observer = observer
+        return self
 
 
-@color_space('xyz')
+@color_space('XYZ')
 class XyzData(WhitePointSensitive):
     """
     Represents data from the CIE XYZ color space. 
@@ -492,7 +518,7 @@ class XyzData(WhitePointSensitive):
     pass
 
 
-@color_space('xyy')
+@color_space('xyY')
 class XyyData(WhitePointSensitive):
     """
     Represents data from the CIE xyY color space
@@ -518,7 +544,7 @@ class XyyData(WhitePointSensitive):
     pass
 
 
-@color_space('xyzr')
+@color_space('XYZ_r')
 class NormalizedXyzData(WhitePointSensitive):
     """
     This space is the CIE XYZ space, normalized by the white point
@@ -526,7 +552,7 @@ class NormalizedXyzData(WhitePointSensitive):
     pass
 
 
-@color_space('lab')
+@color_space('CIELAB')
 class LabData(WhitePointSensitive):
     """
     Represents the CIE L*a*b* color space.
@@ -552,10 +578,10 @@ class LabData(WhitePointSensitive):
     pass
 
 
-@color_space('lchab')
-class LchabData(WhitePointSensitive):
+@color_space('CIELCH')
+class LchData(WhitePointSensitive):
     """
-    Represents the CIELCh_ab color space.
+    Represents the CIELCh color space.
      
     From `Wikipedia <https://en.wikipedia.org/wiki/Lab_color_space#
     Cylindrical_representation:_CIELCh_or_CIEHLC>`_:
@@ -573,8 +599,10 @@ class LchabData(WhitePointSensitive):
 class RgbsSensitive(WhitePointSensitive):
     """
     This class represents spaces that are sensitive to the choice of the 
-    `RgbSpecification`, and will adapt the color data if the 
-    `rgbs`:instance_attribute property changes 
+    :class:`RgbSpecification`, and will adapt the color data if the 
+    :attr:`~RgbsSensitive.rgbs` property value changes.
+     
+    Any Color space representing RGB data should extend this class.
     """
     @WhitePointSensitive.rgbs.setter
     def rgbs(self, r: RgbSpecification):
@@ -605,7 +633,7 @@ class RgbsSensitive(WhitePointSensitive):
         self._caa = caa
 
 
-@color_space('lrgb')
+@color_space('lRGB')
 class LinearRgbData(RgbsSensitive):
     """
     Represents data that is uncompanded RGB
@@ -613,21 +641,21 @@ class LinearRgbData(RgbsSensitive):
     pass
 
 
-@color_space('rgb')
+@color_space('RGB')
 class RgbData(RgbsSensitive):
     pass
 
 
-@color_space('hsl')
+@color_space('HSL')
 class HslData(RgbsSensitive):
     pass
 
 
-@color_space('hsi')
+@color_space('HSI')
 class HsiData(RgbsSensitive):
     pass
 
 
-@color_space('hcy')
+@color_space('HCY')
 class HcyData(RgbsSensitive):
     pass

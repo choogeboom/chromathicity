@@ -18,7 +18,7 @@ LAB_KAPPA = 903.3
 
 
 # noinspection PyUnusedLocal
-@color_conversion('lab', 'xyzr')
+@color_conversion('CIELAB', 'XYZ_r')
 def lab2xyzr(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert LAB to normalized XYZ
@@ -45,7 +45,7 @@ def lab2xyzr(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('lab', 'lchab')
+@color_conversion('CIELAB', 'lchab')
 def lab2lchab(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Convert L*a*b* to LCh
@@ -71,7 +71,7 @@ def lab2lchab(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 # noinspection PyUnusedLocal
-@color_conversion('lchab', 'lab')
+@color_conversion('lchab', 'CIELAB')
 def lchab2lab(lch: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     """
     Converts LCh to L*a*b*
@@ -746,7 +746,7 @@ def xyz2xyzr(xyz: np.ndarray, *,
 
 
 # noinspection PyUnusedLocal
-@color_conversion('xyzr', 'lab')
+@color_conversion('xyzr', 'CIELAB')
 def xyzr2lab(xyzr: np.ndarray, *,
              axis: int=None, **kwargs) -> np.ndarray:
     """

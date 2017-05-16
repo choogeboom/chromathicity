@@ -4,7 +4,7 @@ import numpy as np
 
 from chromathicity.error import raise_not_implemented
 from chromathicity.math import interp1
-from chromathicity.mixin import SetGet
+from chromathicity.util import SetGet
 
 
 class Observer(ABC):
