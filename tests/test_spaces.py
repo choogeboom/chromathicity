@@ -25,5 +25,10 @@ def test_spectral_data():
                                np.array([[.75], [.65], [.55]]))
 
 
+def test_xyz_data():
+    xyz = sp.XyzData([22.53731, 18.418652, 9.526464], is_scaled=True)
+    lab = xyz.to('CIELAB')
+    np.testing.assert_allclose(lab.data, np.array([50., 25., 25.]))
+
 
 

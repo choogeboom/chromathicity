@@ -48,7 +48,6 @@ class TestIlluminant:
         obs = Standard(2)
         expected_white_point = np.array([1.0984166, 1.000, .35573253])
         actual_white_point = ill.get_white_point(obs)
-        print(actual_white_point)
         np.testing.assert_allclose(actual_white_point, expected_white_point,
                                    rtol=1e-6, atol=1e-10)
 

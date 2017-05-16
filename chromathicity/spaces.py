@@ -95,13 +95,15 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     color space data classes should extend this.
     """
     def __init__(self,
-                 data: Union[np.ndarray, Iterable[float], ColorSpaceData],
+                 data: Union[np.ndarray, Iterable[float]],
+                 *,
                  axis: int=None,
                  illuminant: Illuminant=get_default_illuminant(),
                  observer: Observer=get_default_observer(),
                  rgbs: RgbSpecification=get_default_rgb_specification(),
                  caa: ChromaticAdaptationAlgorithm=
-                 get_default_chromatic_adaptation_algorithm()):
+                 get_default_chromatic_adaptation_algorithm(),
+                 is_scaled: bool=False):
         """
         
         :param data: the color space data to contain
@@ -113,14 +115,6 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         :param rgbs: the rgb specification
         :param caa: the chromatic adaptation algorithm
         """
-        if isinstance(data, ColorSpaceData):
-            self._axis = data.axis
-            self._illuminant = data.illuminant
-            self._observer = data.observer
-            self._rgbs = data.rgbs
-            self._caa = data.caa
-            data = data.data
-
         self._data = np.array(data, copy=True)
         self._data.flags.writeable = False
         self._axis = (axis
@@ -138,6 +132,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         self._caa = (caa
                      if caa is not None
                      else get_default_chromatic_adaptation_algorithm())
+        self.is_scaled = is_scaled
 
     def __array__(self, dtype) -> np.ndarray:
         if dtype == self._data.dtype:
@@ -205,7 +200,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         to_space, to_class = get_space(space)
         from_space = get_space_name(type(self))
         self_kwargs = self._get_kwargs()
-        converted_data = convert(self.data,
+        converted_data = convert(self._data,
                                  from_space=from_space,
                                  to_space=to_space,
                                  **self_kwargs)
@@ -315,11 +310,11 @@ class SpectralData(ColorSpaceDataImpl):
     """
     def __init__(self, data: Union[np.ndarray, Iterable[Any], ColorSpaceData],
                  wavelengths: Union[np.ndarray, Iterable[float]]=None,
+                 *,
                  axis=None,
-                 *args,
                  **kwargs):
         if wavelengths is None:
-            if isinstance(data, SpectralData) and data.wavelengths is not None:
+            if hasattr(data, 'wavelengths') and data.wavelengths is not None:
                 wavelengths = data.wavelengths
             else:
                 raise TypeError('SpectralData expected wavelength data, but it '
@@ -336,7 +331,7 @@ class SpectralData(ColorSpaceDataImpl):
                     axis = data.axis
             else:
                 axis = get_matching_axis(data.shape, len(wavelengths))
-        super().__init__(data, axis, *args, **kwargs)
+        super().__init__(data, axis=axis, **kwargs)
         self._wavelengths = np.array(wavelengths, copy=True)
 
     @property
@@ -440,7 +435,20 @@ class XyzData(WhitePointSensitive):
         results were combined into the specification of the CIE RGB color 
         space, from which the CIE XYZ color space was derived.* 
     """
-    pass
+
+    def __init__(self, data, *, is_scaled=False, **kwargs):
+        data = np.array(data)/100. if is_scaled else np.array(data)
+        self.is_scaled = is_scaled
+        super().__init__(data, **kwargs)
+
+    @WhitePointSensitive.data.getter
+    def data(self):
+        return 100.*self._data if self.is_scaled else self._data
+
+    def _get_kwargs(self):
+        k = super()._get_kwargs()
+        k['is_scaled'] = self.is_scaled
+        return k
 
 
 @color_space('xyY')
@@ -529,6 +537,15 @@ class RgbsSensitive(WhitePointSensitive):
      
     Any Color space representing RGB data should extend this class.
     """
+    def __init__(self, data, *, is_scaled=False, **kwargs):
+        data = np.array(data)/255. if is_scaled else np.array(data)
+        self.is_scaled = is_scaled
+        super().__init__(data, **kwargs)
+
+    @WhitePointSensitive.data.getter
+    def data(self):
+        return 255.*self._data if self.is_scaled else self._data
+
     @WhitePointSensitive.rgbs.setter
     def rgbs(self, r: RgbSpecification):
         self.change_rgbs(r, self._caa)
@@ -556,6 +573,11 @@ class RgbsSensitive(WhitePointSensitive):
                              caa=caa)
         self._rgbs = rgbs
         self._caa = caa
+
+    def _get_kwargs(self):
+        k = super()._get_kwargs()
+        k['is_scaled'] = self.is_scaled
+        return k
 
 
 @color_space('lRGB')
