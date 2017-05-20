@@ -119,7 +119,7 @@ def lrgb2xyz(lrgb: np.ndarray,
              illuminant: Illuminant=None,
              observer: Observer=None,
              rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
+             caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
     """
     Convert from linear RGB to XYZ
     
@@ -575,7 +575,7 @@ def xyz2lrgb(xyz: np.ndarray, *,
              illuminant: Illuminant=None,
              observer: Observer=None,
              rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
+             caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
     """
     Convert XYZ to linear RGB
     
@@ -683,7 +683,7 @@ def xyz2xyz(source_xyz: np.ndarray,
             source_white_point: np.ndarray,
             destination_white_point: np.ndarray,
             axis: int=None,
-            caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
+            caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
     """
     Convert XYZ values between two white points
     

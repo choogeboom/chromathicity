@@ -94,6 +94,11 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     A full implementation of the :class:`ColorSpaceDataBase` interface. All 
     color space data classes should extend this.
     """
+
+    _scale_factor = 1
+    _min_value = -np.inf
+    _max_value = np.inf
+
     def __init__(self,
                  data: Union[np.ndarray, Iterable[float]],
                  *,
@@ -114,8 +119,12 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         :param observer: the observer
         :param rgbs: the rgb specification
         :param caa: the chromatic adaptation algorithm
+        :param is_scaled: Whether or not the data is scaled
         """
-        self._data = np.array(data, copy=True)
+        if is_scaled:
+            self._data = np.array(data, copy=True)/self._scale_factor
+        else:
+            self._data = np.array(data, copy=True)
         self._data.flags.writeable = False
         self._axis = (axis
                       if axis is not None
@@ -132,7 +141,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         self._caa = (caa
                      if caa is not None
                      else get_default_chromatic_adaptation_algorithm())
-        self.is_scaled = is_scaled
+        self._is_scaled = is_scaled
 
     def __array__(self, dtype) -> np.ndarray:
         if dtype == self._data.dtype:
@@ -156,6 +165,15 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                 and self.observer == other.observer
                 and self.rgbs == other.rgbs
                 and self.caa == other.caa)
+
+    @property
+    def is_scaled(self):
+        return self._is_scaled
+
+    @is_scaled.setter
+    def is_scaled(self, tf):
+        self.reset_data_cache()
+        self._is_scaled = tf
 
     @property
     def components(self) -> Tuple[np.ndarray, ...]:
@@ -204,8 +222,10 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                                  from_space=from_space,
                                  to_space=to_space,
                                  **self_kwargs)
+        self_is_scaled = self_kwargs.pop('is_scaled')
         new_data = to_class(data=converted_data,
                             **self_kwargs)
+        new_data.is_scaled = self_is_scaled
         new_data.set(**kwargs)
         return new_data
 
@@ -214,7 +234,8 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                 'illuminant': self.illuminant,
                 'observer': self.observer,
                 'rgbs': self.rgbs,
-                'caa': self.caa}
+                'caa': self.caa,
+                'is_scaled': self.is_scaled}
 
     @property
     def data(self) -> np.ndarray:
@@ -228,7 +249,19 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         is the same as::
         
             space[inds]"""
-        return self._data
+        b_shape = [-1 if k == self.axis else 1
+                   for k in range(self._data.ndim)]
+        min_value = np.array(self._min_value).reshape(b_shape)
+        max_value = np.array(self._max_value).reshape(b_shape)
+        d = np.clip(self._data, min_value, max_value)
+        return self._scale_factor * d if self.is_scaled else d
+
+    def reset_data_cache(self):
+        """
+        Resets the cached property :attr:`data`
+        :return: None
+        """
+        pass
 
     @property
     def axis(self) -> int:
@@ -256,6 +289,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @illuminant.setter
     def illuminant(self, ill: Illuminant):
+        self.reset_data_cache()
         self._illuminant = ill
 
     @property
@@ -267,6 +301,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @observer.setter
     def observer(self, obs: Observer):
+        self.reset_data_cache()
         self._observer = obs
 
     @property
@@ -276,6 +311,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @rgbs.setter
     def rgbs(self, r: RgbSpecification):
+        self.reset_data_cache()
         self._rgbs = r
 
     @property
@@ -285,6 +321,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     @caa.setter
     def caa(self, c: ChromaticAdaptationAlgorithm):
+        self.reset_data_cache()
         self._caa = c
 
 
@@ -293,26 +330,31 @@ class SpectralData(ColorSpaceDataImpl):
     """
     Contains raw reflectance spectral data
     
-    In addition to the usual data arguments, this data also needs the 
-    wavelengths of the spectra. 
-    
-    :param data: The spectral data [reflectance].
-    :param wavelengths: The wavelengths that correspond to the spectra.
-    :param axis: The axis along which the spectra lie.
-    :param illuminant: The illuminant
-    :type illuminant: Illuminant
-    :param observer: The observer
-    :type observer: Observer
-    :param rgbs: The RGB specification
-    :type rgbs: RgbSpecification
-    :param caa: The chromatic adaptation algorithm.
-    :type caa: ChromaticAdaptationAlgorithm
     """
+    _scale_factor = 100
+
     def __init__(self, data: Union[np.ndarray, Iterable[Any], ColorSpaceData],
                  wavelengths: Union[np.ndarray, Iterable[float]]=None,
                  *,
                  axis=None,
                  **kwargs):
+        """
+        
+        In addition to the usual data arguments, this data also needs the 
+        wavelengths of the spectra. 
+        
+        :param data: The spectral data [reflectance].
+        :param wavelengths: The wavelengths that correspond to the spectra.
+        :param axis: The axis along which the spectra lie.
+        :param illuminant: The illuminant
+        :type illuminant: Illuminant
+        :param observer: The observer
+        :type observer: Observer
+        :param rgbs: The RGB specification
+        :type rgbs: RgbSpecification
+        :param caa: The chromatic adaptation algorithm.
+        :type caa: ChromaticAdaptationAlgorithm 
+        """
         if wavelengths is None:
             if hasattr(data, 'wavelengths') and data.wavelengths is not None:
                 wavelengths = data.wavelengths
@@ -435,20 +477,7 @@ class XyzData(WhitePointSensitive):
         results were combined into the specification of the CIE RGB color 
         space, from which the CIE XYZ color space was derived.* 
     """
-
-    def __init__(self, data, *, is_scaled=False, **kwargs):
-        data = np.array(data)/100. if is_scaled else np.array(data)
-        self.is_scaled = is_scaled
-        super().__init__(data, **kwargs)
-
-    @WhitePointSensitive.data.getter
-    def data(self):
-        return 100.*self._data if self.is_scaled else self._data
-
-    def _get_kwargs(self):
-        k = super()._get_kwargs()
-        k['is_scaled'] = self.is_scaled
-        return k
+    _scale_factor = 100
 
 
 @color_space('xyY')
@@ -508,7 +537,8 @@ class LabData(WhitePointSensitive):
         full name, since they represent L\*, a\* and b\*, to distinguish them 
         from Hunter's L, a, and b.*
     """
-    pass
+    _min_value = np.array([0., -np.inf, -np.inf])
+    _max_value = np.array([100., np.inf, np.inf])
 
 
 @color_space('CIELCH')
@@ -525,7 +555,8 @@ class LchData(WhitePointSensitive):
         CIELab color wheel) are specified. The CIELab lightness L* remains 
         unchanged. 
     """
-    pass
+    _min_value = np.array([0., 0., 0.])
+    _max_value = np.array([100., np.inf, 360.])
 
 
 # noinspection PyMethodOverriding
@@ -537,14 +568,9 @@ class RgbsSensitive(WhitePointSensitive):
      
     Any Color space representing RGB data should extend this class.
     """
-    def __init__(self, data, *, is_scaled=False, **kwargs):
-        data = np.array(data)/255. if is_scaled else np.array(data)
-        self.is_scaled = is_scaled
-        super().__init__(data, **kwargs)
-
-    @WhitePointSensitive.data.getter
-    def data(self):
-        return 255.*self._data if self.is_scaled else self._data
+    _scale_factor = 255.
+    _min_value = np.array([0., 0., 0.])
+    _max_value = np.array([1., 1., 1.])
 
     @WhitePointSensitive.rgbs.setter
     def rgbs(self, r: RgbSpecification):
@@ -573,11 +599,6 @@ class RgbsSensitive(WhitePointSensitive):
                              caa=caa)
         self._rgbs = rgbs
         self._caa = caa
-
-    def _get_kwargs(self):
-        k = super()._get_kwargs()
-        k['is_scaled'] = self.is_scaled
-        return k
 
 
 @color_space('lRGB')
