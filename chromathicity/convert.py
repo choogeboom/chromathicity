@@ -18,9 +18,8 @@ LAB_EPS = 0.008856
 LAB_KAPPA = 903.3
 
 
-# noinspection PyUnusedLocal
 @color_conversion('CIELAB', 'XYZ_r')
-def lab2xyzr(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+def lab2xyzr(lab: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert LAB to normalized XYZ
     
@@ -45,15 +44,13 @@ def lab2xyzr(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     return xyzr
 
 
-# noinspection PyUnusedLocal
 @color_conversion('CIELAB', 'CIELCH')
-def lab2lchab(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+def lab2lchab(lab: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert L*a*b* to LCh
     
     :param lab: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -71,15 +68,13 @@ def lab2lchab(lab: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     return lch
 
 
-# noinspection PyUnusedLocal
 @color_conversion('CIELCH', 'CIELAB')
-def lchab2lab(lch: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+def lchab2lab(lch: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Converts LCh to L*a*b*
     
     :param lch: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -96,10 +91,8 @@ def lchab2lab(lch: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     return lab
 
 
-# noinspection PyUnusedLocal
 @color_conversion('lRGB', 'RGB')
-def lrgb2rgb(lrgb: np.ndarray, *, rgbs: RgbSpecification=None,
-             **kwargs) -> np.ndarray:
+def lrgb2rgb(lrgb: np.ndarray, *, rgbs: RgbSpecification=None) -> np.ndarray:
     """
     Convert linear RGB to companded RGB
     
@@ -119,7 +112,7 @@ def lrgb2xyz(lrgb: np.ndarray,
              illuminant: Illuminant=None,
              observer: Observer=None,
              rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
+             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
     """
     Convert from linear RGB to XYZ
     
@@ -176,11 +169,10 @@ def lrgb2xyz(lrgb: np.ndarray,
         return xyz
 
 
-# noinspection PyUnusedLocal
 @color_conversion('RGB', 'lRGB')
 def rgb2lrgb(rgb: np.ndarray,
              *,
-             rgbs: RgbSpecification=None, **kwargs) -> np.ndarray:
+             rgbs: RgbSpecification=None) -> np.ndarray:
     """
     Convert companded RGB to linear RGB
     
@@ -193,17 +185,14 @@ def rgb2lrgb(rgb: np.ndarray,
     return rgbs.inverse_compand(rgb)
 
 
-# noinspection PyUnusedLocal
 @color_conversion('RGB', 'HSL')
 def rgb2hsl(rgb: np.ndarray,
             *,
-            axis: int=None,
-            **kwargs) -> np.ndarray:
+            axis: int=None) -> np.ndarray:
     """
     Convert RGB to Hue Saturation Lightness
     :param rgb: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -226,19 +215,16 @@ def rgb2hsl(rgb: np.ndarray,
     return hsl
 
 
-# noinspection PyUnusedLocal
 @color_conversion('HSL', 'RGB')
 def hsl2rgb(hsl: np.ndarray,
             *,
-            axis: int=None,
-            **kwargs) -> np.ndarray:
+            axis: int=None) -> np.ndarray:
     """
     Convert from Hue Saturation Lightness (HSL) to RGB
     
     :type hsl: np.ndarray
     :param hsl: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -261,18 +247,15 @@ def hsl2rgb(hsl: np.ndarray,
         return rgb1 + little_m
 
 
-# noinspection PyUnusedLocal
 @color_conversion('RGB', 'HSI')
 def rgb2hsi(rgb: np.ndarray,
             *,
-            axis: int=None,
-            **kwargs) -> np.ndarray:
+            axis: int=None) -> np.ndarray:
     """
     Convert RGB to Hue Saturation Intensity
     
     :param rgb: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -295,12 +278,10 @@ def rgb2hsi(rgb: np.ndarray,
     return hsi
 
 
-# noinspection PyUnusedLocal
 @color_conversion('HSI', 'RGB')
 def hsi2rgb(hsi: np.ndarray,
             *,
-            axis: int=None,
-            **kwargs) -> np.ndarray:
+            axis: int=None) -> np.ndarray:
     """
     Convert Hue Saturation Intensity (HSI) to RGB
     
@@ -326,9 +307,8 @@ def hsi2rgb(hsi: np.ndarray,
         return rgb1 + little_m
 
 
-# noinspection PyUnusedLocal
 @color_conversion('RGB', 'HSV')
-def rgb2hsv(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+def rgb2hsv(rgb: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert from RGB to Hue Saturation Value (HSV)
     
@@ -354,12 +334,11 @@ def rgb2hsv(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 @color_conversion('HSV', 'RGB')
-def hsv2rgb(hsv: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+def hsv2rgb(hsv: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert from HSV to RGB
     :param hsv: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -381,13 +360,12 @@ def hsv2rgb(hsv: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 @color_conversion('RGB', 'HCY')
-def rgb2hcy(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+def rgb2hcy(rgb: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert from RGB to Hue, Chroma, Luma (Y'_601)
     
     :param rgb: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -406,12 +384,11 @@ def rgb2hcy(rgb: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
 
 
 @color_conversion('HCY', 'RGB')
-def hcy2rgb(hcy: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
+def hcy2rgb(hcy: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     
     :param hcy: 
     :param axis: 
-    :param kwargs: 
     :return: 
     """
     if axis is None:
@@ -420,7 +397,7 @@ def hcy2rgb(hcy: np.ndarray, *, axis: int=None, **kwargs) -> np.ndarray:
     inds = construct_component_inds(axis, hcy.ndim, 3)
 
     h_prime = hcy[inds[0]] / 60.
-    x = hcy[inds[1]] * (1 - np.abs(np.mod(h_prime, 2) - 1))
+    x = hcy[inds[1]] * (1 - np.abs(np.mod(h_prime, 2) - 1))  # type: np.ndarray
     rgb1 = _compute_rgb1(hcy.shape, inds, h_prime, x, hcy[inds[1]])
     little_m = hcy[inds[2]] - (0.299*rgb1[inds[0]] + 0.587*rgb1[inds[1]]
                                + 0.114*rgb1[inds[2]])
@@ -486,15 +463,13 @@ def _compute_rgb1(shape, inds, h_prime, x, chroma) -> np.ndarray:
     return rgb1
 
 
-# noinspection PyUnusedLocal
 @color_conversion('Spectrum', 'CIEXYZ')
 def spectrum2xyz(spectrum: np.ndarray,
                  wavelengths: np.ndarray,
                  *,
                  axis: int=None,
                  illuminant: Illuminant=get_default_illuminant(),
-                 observer: Observer=get_default_observer(),
-                 **kwargs) -> np.ndarray:
+                 observer: Observer=get_default_observer()) -> np.ndarray:
     """
     Convert reflectance spectrum to XYZ
     
@@ -541,9 +516,8 @@ def spectrum2xyz(spectrum: np.ndarray,
     return np.concatenate((x, y, z), axis=axis)
 
 
-# noinspection PyUnusedLocal
 @color_conversion('xyY', 'CIEXYZ')
-def xyy2xyz(xyy, *, axis: int=None, **kwargs) -> np.ndarray:
+def xyy2xyz(xyy, *, axis: int=None) -> np.ndarray:
     """
     converts from xyY to XYZ
     
@@ -575,7 +549,7 @@ def xyz2lrgb(xyz: np.ndarray, *,
              illuminant: Illuminant=None,
              observer: Observer=None,
              rgbs: RgbSpecification=None,
-             caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
+             caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
     """
     Convert XYZ to linear RGB
     
@@ -631,12 +605,11 @@ def xyz2lrgb(xyz: np.ndarray, *,
     return lrgb.transpose(new_dims)
 
 
-# noinspection PyUnusedLocal
 @color_conversion('CIEXYZ', 'xyY')
 def xyz2xyy(xyz: np.ndarray, *,
             axis: int=None,
             illuminant: Illuminant=None,
-            observer: Observer=None, **kwargs) -> np.ndarray:
+            observer: Observer=None) -> np.ndarray:
     """
     Convert XYZ to xyY
     
@@ -683,7 +656,7 @@ def xyz2xyz(source_xyz: np.ndarray,
             source_white_point: np.ndarray,
             destination_white_point: np.ndarray,
             axis: int=None,
-            caa: ChromaticAdaptationAlgorithm=None, **kwargs) -> np.ndarray:
+            caa: ChromaticAdaptationAlgorithm=None) -> np.ndarray:
     """
     Convert XYZ values between two white points
     
@@ -724,12 +697,11 @@ def xyz2xyz(source_xyz: np.ndarray,
     return destination_xyz.transpose(new_dims)
 
 
-# noinspection PyUnusedLocal
 @color_conversion('CIEXYZ', 'XYZ_r')
 def xyz2xyzr(xyz: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=get_default_illuminant(),
-             observer: Observer=get_default_observer(), **kwargs) -> np.ndarray:
+             observer: Observer=get_default_observer()) -> np.ndarray:
     """
     Convert XYZ to normalized XYZ reflectance
     :param xyz: the raw xyz values
@@ -747,10 +719,9 @@ def xyz2xyzr(xyz: np.ndarray, *,
     return xyz / white_point
 
 
-# noinspection PyUnusedLocal
 @color_conversion('XYZ_r', 'CIELAB')
 def xyzr2lab(xyzr: np.ndarray, *,
-             axis: int=None, **kwargs) -> np.ndarray:
+             axis: int=None) -> np.ndarray:
     """
     Convert from normalized XYZ to LAB
     
@@ -776,12 +747,11 @@ def xyzr2lab(xyzr: np.ndarray, *,
     return lab
 
 
-# noinspection PyUnusedLocal
 @color_conversion('XYZ_r', 'CIEXYZ')
 def xyzr2xyz(xyzr: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=None,
-             observer: Observer=None, **kwargs) -> np.ndarray:
+             observer: Observer=None) -> np.ndarray:
     """
     Convert normalized XYZ to LAB
 
