@@ -36,8 +36,9 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from inspect import signature
 from logging import getLogger
-from typing import Union, Callable, List, Tuple, Dict
+from typing import Union, Callable, List, Tuple, Dict, Any
 
+import numpy as np
 from networkx import DiGraph, shortest_path, NetworkXNoPath
 
 from chromathicity.error import UndefinedConversionError, \
@@ -123,9 +124,11 @@ class DummyConversionManager(ConversionManager):
 
 
 _conversion_manager = GraphConversionManager()
+BareConversion = Callable[[np.ndarray, Any], np.ndarray]
 
 
-def color_conversion(from_space_name: str, target_space_name: str):
+def color_conversion(from_space_name: str, target_space_name: str) \
+        -> Callable[[BareConversion], Conversion]:
     """
     
     Decorator to indicate a function that performs a conversion from one 
@@ -138,11 +141,10 @@ def color_conversion(from_space_name: str, target_space_name: str):
     :param target_space_name: Target color space name or type
     """
 
-    def decorator(f: Conversion) -> Conversion:
+    def decorator(f: BareConversion) -> Conversion:
         f.start_type = from_space_name
         f.target_type = target_space_name
 
-        from numpy import ndarray
         from chromathicity.illuminant import Illuminant
         from chromathicity.observer import Observer
         from chromathicity.rgbspec import RgbSpecification
@@ -156,16 +158,16 @@ def color_conversion(from_space_name: str, target_space_name: str):
         @wraps(f, assigned=('__module__', '__name__', '__qualname__',
                             '__doc__'))
         def convert_wrapper(
-                data: ndarray,
+                data: np.ndarray,
                 *args,
                 axis: int=None,
                 illuminant: Illuminant=None,
                 observer: Observer=None,
                 rgbs: RgbSpecification=None,
                 caa: ChromaticAdaptationAlgorithm=None) \
-                -> ndarray:
-            local_vals = locals()
-            kwargs = {n: local_vals[n] for n in kwarg_names}
+                -> np.ndarray:
+            local_values = locals()
+            kwargs = {n: local_values[n] for n in kwarg_names}
             return f(data, *args, **kwargs)
 
         _conversion_manager.add_type_conversion(from_space_name,
