@@ -20,8 +20,9 @@ from chromathicity.manage import get_space, get_space_name, color_space
 from chromathicity.observer import get_default_observer, Observer
 from chromathicity.rgbspec import (get_default_rgb_specification,
                                    RgbSpecification)
+from chromathicity.typing import ArrayLike
 from chromathicity.util import SetGet, construct_component_inds, \
-    get_matching_axis
+    get_matching_axis, lazy_property
 
 
 class ColorSpaceData(ABC):
@@ -48,7 +49,7 @@ class ColorSpaceData(ABC):
             space[inds]"""
         pass
 
-    data = property(get_data)
+    data = lazy_property(get_data)
 
     def reset_data_cache(self):
         """
@@ -71,7 +72,7 @@ class ColorSpaceData(ABC):
     def set_axis(self, a: int):
         pass
 
-    axis = property(get_axis, set_axis)
+    axis = lazy_property(get_axis, set_axis)
 
     @abstractmethod
     def get_illuminant(self) -> Illuminant:
@@ -85,7 +86,7 @@ class ColorSpaceData(ABC):
     def set_illuminant(self, ill: Illuminant):
         pass
 
-    illuminant = property(get_illuminant, set_illuminant)
+    illuminant = lazy_property(get_illuminant, set_illuminant)
 
     @abstractmethod
     def get_observer(self) -> Observer:
@@ -100,7 +101,7 @@ class ColorSpaceData(ABC):
     def set_observer(self, obs: Observer):
         pass
 
-    observer = property(get_observer, set_observer)
+    observer = lazy_property(get_observer, set_observer)
 
     @abstractmethod
     def get_rgbs(self) -> RgbSpecification:
@@ -113,7 +114,7 @@ class ColorSpaceData(ABC):
     def set_rgbs(self, r: RgbSpecification):
         pass
 
-    rgbs = property(get_rgbs, set_rgbs)
+    rgbs = lazy_property(get_rgbs, set_rgbs)
 
     @abstractmethod
     def get_caa(self) -> ChromaticAdaptationAlgorithm:
@@ -126,7 +127,7 @@ class ColorSpaceData(ABC):
     def set_caa(self, c: ChromaticAdaptationAlgorithm):
         pass
 
-    caa = property(get_caa, set_caa)
+    caa = lazy_property(get_caa, set_caa)
 
     @abstractmethod
     def get_is_scaled(self) -> bool:
@@ -142,7 +143,7 @@ class ColorSpaceData(ABC):
     def set_is_scaled(self, tf: bool):
         pass
 
-    is_scaled = property(get_is_scaled, set_is_scaled)
+    is_scaled = lazy_property(get_is_scaled, set_is_scaled)
 
     def get_components(self) -> Tuple[np.ndarray, ...]:
         """
@@ -162,7 +163,7 @@ class ColorSpaceData(ABC):
                                                   min_ndims=0)
         return tuple(self[c] for c in component_inds)
 
-    components = property(get_components)
+    components = lazy_property(get_components)
 
     def get_num_components(self) -> int:
         """
@@ -171,7 +172,7 @@ class ColorSpaceData(ABC):
         """
         return len(self.components)
 
-    num_components = property(get_num_components)
+    num_components = lazy_property(get_num_components)
 
     @abstractmethod
     def to(self, space: Union[str, type]):
@@ -239,15 +240,15 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     # Controls how scaling works. If :attr:`~ColorSpaceDataImpl.is_scaled` is
     # ``True``, then the data will be scaled by this value
-    scale_factor = 1.  # type: float
+    scale_factor = 1.  # type: ArrayLike
 
     # The minimum allowed value for a color space. Data will be clipped to be
     # no less than the value of ``min_value``.
-    min_value = -np.inf  # type: float
+    min_value = [-np.inf]  # type: ArrayLike
 
     # The maximum allowed value for a color space. Data will be clipped to be
     # no more than the value of ``max_value``.
-    max_value = np.inf  # type: float
+    max_value = [np.inf]  # type: ArrayLike
 
     def __init__(self,
                  data: Union[np.ndarray, Iterable[float]],
@@ -351,11 +352,11 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         to_space, to_class = get_space(space)
         from_space = get_space_name(type(self))
         self_kwargs = self.kwargs
+        self_is_scaled = self_kwargs.pop('is_scaled')
         converted_data = convert(self._data,
                                  from_space=from_space,
                                  to_space=to_space,
                                  **self_kwargs)
-        self_is_scaled = self_kwargs.pop('is_scaled')
         new_data = to_class(data=converted_data,
                             **self_kwargs)
         new_data.is_scaled = self_is_scaled

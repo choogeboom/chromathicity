@@ -71,3 +71,58 @@ def get_matching_axis(shape: Tuple, length: int) -> int:
         raise ValueError('Unable to infer axis tue to shape mismatch: ' 
                          '{} =/= {}.'.format(shape, length))
     return axis_candidates[-1]
+
+
+# noinspection PyPep8Naming
+class lazy_property:
+    """
+    A property-like descriptor that does not bind to a function, but to the name 
+    of the function. That way subclasses can easily override the getter/setter/
+    delete
+    """
+    def __init__(self,
+                 getter_method=None,
+                 setter_method=None,
+                 deleter_method=None,
+                 doc=None):
+        self.getter_method = getter_method
+        self.setter_method = setter_method
+        self.deleter_method = deleter_method
+        if doc is None:
+            if getter_method.__doc__ is not None:
+                doc = getter_method.__doc__
+            elif setter_method is not None:
+                doc = setter_method.__doc__
+        self.__doc__ = doc
+
+    def __get__(self, obj, cls=None):
+        if obj is None:
+            return self
+        if self.getter_method is None:
+            raise AttributeError('unreadable attribute')
+        try:
+            fget = getattr(obj, self.getter_method.__name__)
+        except AttributeError:
+            raise TypeError(f'{type(obj).__name__} object does not have '
+                            f'a {self.getter_method.__name__} method')
+        return fget()
+
+    def __set__(self, obj, value):
+        if self.setter_method is None:
+            raise AttributeError("can't set attribute")
+        try:
+            fset = getattr(obj, self.setter_method.__name__)
+        except AttributeError:
+            raise TypeError(f'{type(obj).__name__} object does not have '
+                            f'a {self.setter_method.__name__} method.')
+        fset(value)
+
+    def __delete__(self, obj):
+        if self.deleter_method is None:
+            raise AttributeError("can't delete attribute")
+        try:
+            fdel = getattr(obj, self.deleter_method.__name__)
+        except AttributeError:
+            raise TypeError(f'{type(obj).__name__} object does not have '
+                            f'a {self.deleter_method.__name__} method')
+        fdel()
