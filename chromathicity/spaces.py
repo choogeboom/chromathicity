@@ -15,7 +15,6 @@ from chromathicity.chromadapt import (
     get_default_chromatic_adaptation_algorithm,
     ChromaticAdaptationAlgorithm)
 from chromathicity.convert import convert
-from chromathicity.error import raise_not_implemented
 from chromathicity.illuminant import get_default_illuminant, Illuminant
 from chromathicity.manage import get_space, get_space_name, color_space
 from chromathicity.observer import get_default_observer, Observer
@@ -28,76 +27,227 @@ from chromathicity.util import SetGet, construct_component_inds, \
 class ColorSpaceData(ABC):
     """
     Defines the main interface for all color space data classes. 
-    :class:`ColorSpaceDataImpl` provides a minimal implementation of this 
+    :class:`ColorSpaceDataImpl` provides a full implementation of this 
     interface, so all color space data classes should extend that class instead
     of this one.
     """
     __spacename__ = ''
 
-    @property
     @abstractmethod
-    def data(self):
+    def get_data(self) -> np.ndarray:
+        """
+        The stored color data
+
+        Indexing into the space data instance is equivalent to indexing into the
+        data itself::
+
+            space.data[inds]
+
+        is the same as::
+
+            space[inds]"""
         pass
 
-    @property
-    @abstractmethod
-    def axis(self):
+    data = property(get_data)
+
+    def reset_data_cache(self):
+        """
+        Resets the cached property :attr:`data`
+        :return: None
+        """
         pass
 
-    @axis.setter
-    def axis(self, a):
-        raise_not_implemented(self, 'setting axis')
-
-    @property
     @abstractmethod
-    def illuminant(self):
+    def get_axis(self) -> int:
+        """
+        The axis in the data array that the color components lie along.
+        
+        Changing the axis will permute the dimensions of the underlying
+        array, so that the color space components lie along the new axis
+        """
         pass
 
-    @illuminant.setter
-    def illuminant(self, ill: Illuminant):
-        raise_not_implemented(self, 'setting illuminant')
-
-    @property
     @abstractmethod
-    def observer(self):
+    def set_axis(self, a: int):
         pass
 
-    @observer.setter
-    def observer(self, obs: Observer):
-        raise_not_implemented(self, 'setting observer')
+    axis = property(get_axis, set_axis)
 
-    @property
     @abstractmethod
-    def rgbs(self):
+    def get_illuminant(self) -> Illuminant:
+        """
+        The illuminant. This combined with the 
+        :py:attr:`~ColorSpaceData.observer` 
+        determines the reference white point of the space."""
         pass
 
-    @rgbs.setter
-    def rgbs(self, r: RgbSpecification):
-        raise_not_implemented(self, 'setting rgbs')
-
-    @property
     @abstractmethod
-    def caa(self):
+    def set_illuminant(self, ill: Illuminant):
         pass
 
-    @caa.setter
-    def caa(self, c):
-        raise_not_implemented(self, 'setting caa')
+    illuminant = property(get_illuminant, set_illuminant)
+
+    @abstractmethod
+    def get_observer(self) -> Observer:
+        """
+        The observer. This combined with the 
+        :py:attr:`~ColorSpaceData.illuminant` 
+        determines the reference white point of the space.
+        """
+        pass
+
+    @abstractmethod
+    def set_observer(self, obs: Observer):
+        pass
+
+    observer = property(get_observer, set_observer)
+
+    @abstractmethod
+    def get_rgbs(self) -> RgbSpecification:
+        """
+        The RGB color space specification.
+        """
+        pass
+
+    @abstractmethod
+    def set_rgbs(self, r: RgbSpecification):
+        pass
+
+    rgbs = property(get_rgbs, set_rgbs)
+
+    @abstractmethod
+    def get_caa(self) -> ChromaticAdaptationAlgorithm:
+        """
+        The chromatic adaptation algorithm.
+        """
+        pass
+
+    @abstractmethod
+    def set_caa(self, c: ChromaticAdaptationAlgorithm):
+        pass
+
+    caa = property(get_caa, set_caa)
+
+    @abstractmethod
+    def get_is_scaled(self) -> bool:
+        """
+        Whether the data is scaled
+        
+        If set to ``True``, then the data is scaled by the scale factor of the
+        space.
+        """
+        pass
+
+    @abstractmethod
+    def set_is_scaled(self, tf: bool):
+        pass
+
+    is_scaled = property(get_is_scaled, set_is_scaled)
+
+    def get_components(self) -> Tuple[np.ndarray, ...]:
+        """
+        Tuple containing the correct slices of the data to get the 
+        individual color space components. For example, in :class:`LabData`, 
+        this property would contain ``(L*, a*, b*)``.
+
+            >>> lab = LabData([[50., 25., 25.], [75., 0., 60.]])
+            >>> lab.components[0]
+            array([[ 50.],
+                   [ 75.]])
+
+        """
+        component_inds = construct_component_inds(self.axis,
+                                                  self.data.ndim,
+                                                  self.num_components,
+                                                  min_ndims=0)
+        return tuple(self[c] for c in component_inds)
+
+    components = property(get_components)
+
+    def get_num_components(self) -> int:
+        """
+        :return: The number of components in the color space. For example 
+           :class:`LabData` has three components: L*, a*, b*. 
+        """
+        return len(self.components)
+
+    num_components = property(get_num_components)
 
     @abstractmethod
     def to(self, space: Union[str, type]):
+        """
+        Convert this space to another space.::
+        
+            lab = LabData([50., 25., 25.])
+            xyz = lab.to('xyz')
+        
+        :param space: either the name or the class of the destination color 
+           space. 
+        :return: The new color space data
+
+        """
         pass
+
+    def get_kwargs(self) -> dict:
+        """
+        The keyword arguments used to construct the object
+        :return: 
+        """
+        return {'axis': self.axis,
+                'illuminant': self.illuminant,
+                'observer': self.observer,
+                'rgbs': self.rgbs,
+                'caa': self.caa,
+                'is_scaled': self.is_scaled}
+
+    kwargs = property(get_kwargs)
+
+    def __array__(self, dtype) -> np.ndarray:
+        if dtype == self.data.dtype:
+            return self.data
+        else:
+            return np.array(self.data, copy=True, dtype=dtype)
+
+    def __repr__(self) -> str:
+        kwarg_repr = ', '.join(f'{key!s}={value!r}'
+                               for key, value in self.kwargs.items())
+        return f'{type(self).__name__}({self.data!r}, {kwarg_repr})'
+
+    def __getitem__(self, *args, **kwargs) -> Union[float, np.ndarray]:
+        return self.data.__getitem__(*args, **kwargs)
+
+    def __eq__(self, other) -> bool:
+        return (type(self) == type(other)
+                and np.allclose(self.data, other.data)
+                and self.axis == other.axis
+                and self.illuminant == other.illuminant
+                and self.observer == other.observer
+                and self.rgbs == other.rgbs
+                and self.caa == other.caa
+                and self.is_scaled == other.is_scaled)
 
 
 class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     """
     A full implementation of the :class:`ColorSpaceDataBase` interface. All 
     color space data classes should extend this.
+    
+    Since this class is designed to be extended, every property calls a 
+    respective getter and setter method, so that overriding is much easier
+    in subclasses.
     """
 
-    _scale_factor = 1
-    _min_value = -np.inf
-    _max_value = np.inf
+    # Controls how scaling works. If :attr:`~ColorSpaceDataImpl.is_scaled` is
+    # ``True``, then the data will be scaled by this value
+    scale_factor = 1.  # type: float
+
+    # The minimum allowed value for a color space. Data will be clipped to be
+    # no less than the value of ``min_value``.
+    min_value = -np.inf  # type: float
+
+    # The maximum allowed value for a color space. Data will be clipped to be
+    # no more than the value of ``max_value``.
+    max_value = np.inf  # type: float
 
     def __init__(self,
                  data: Union[np.ndarray, Iterable[float]],
@@ -122,7 +272,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         :param is_scaled: Whether or not the data is scaled
         """
         if is_scaled:
-            self._data = np.array(data, copy=True)/self._scale_factor
+            self._data = np.array(data, copy=True)/self.scale_factor
         else:
             self._data = np.array(data, copy=True)
         self._data.flags.writeable = False
@@ -143,81 +293,64 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                      else get_default_chromatic_adaptation_algorithm())
         self._is_scaled = is_scaled
 
-    def __array__(self, dtype) -> np.ndarray:
-        if dtype == self._data.dtype:
-            return self._data
-        else:
-            return np.array(self._data, copy=True, dtype=dtype)
+    def get_data(self) -> np.ndarray:
+        b_shape = [-1 if k == self.axis else 1
+                   for k in range(self._data.ndim)]
+        min_value = np.array(self.min_value).reshape(b_shape)
+        max_value = np.array(self.max_value).reshape(b_shape)
+        d = np.clip(self._data, min_value, max_value)
+        return self.scale_factor * d if self.is_scaled else d
 
-    def __getitem__(self, *args, **kwargs) -> Union[float, np.ndarray]:
-        return self.data.__getitem__(*args, **kwargs)
+    def get_axis(self) -> int:
+        return self._axis
 
-    def __repr__(self) -> str:
-        kwarg_repr = ', '.join(f'{key!s}={value!r}'
-                               for key, value in self._get_kwargs().items())
-        return f'{type(self).__name__}({self.data!r}, {kwarg_repr})'
+    def set_axis(self, a: int):
+        if a is None:
+            self._axis = get_matching_axis(self.data.shape,
+                                           self.num_components)
+        elif a != self.axis:
+            new_dims = list(range(self.data.ndim))
+            new_dims[a] = self.axis
+            new_dims[self.axis] = a
+            self._data = self._data.transpose(new_dims)
+            self._axis = a
 
-    def __eq__(self, other) -> bool:
-        return (type(self) == type(other)
-                and np.allclose(self.data, other.data)
-                and self.axis == other.axis
-                and self.illuminant == other.illuminant
-                and self.observer == other.observer
-                and self.rgbs == other.rgbs
-                and self.caa == other.caa)
+    def get_illuminant(self) -> Illuminant:
+        return self._illuminant
 
-    @property
-    def is_scaled(self):
+    def set_illuminant(self, ill: Illuminant):
+        self._illuminant = ill
+
+    def get_observer(self) -> Observer:
+        return self._observer
+
+    def set_observer(self, obs: Observer):
+        self._observer = obs
+
+    def get_rgbs(self) -> RgbSpecification:
+        return self._rgbs
+
+    def set_rgbs(self, r: RgbSpecification):
+        self._rgbs = r
+
+    def get_caa(self) -> ChromaticAdaptationAlgorithm:
+        return self._caa
+
+    def set_caa(self, c: ChromaticAdaptationAlgorithm):
+        self._caa = c
+
+    def get_is_scaled(self) -> bool:
         return self._is_scaled
 
-    @is_scaled.setter
-    def is_scaled(self, tf):
+    def set_is_scaled(self, is_scaled: bool) -> None:
+        self._is_scaled = is_scaled
         self.reset_data_cache()
-        self._is_scaled = tf
-
-    @property
-    def components(self) -> Tuple[np.ndarray, ...]:
-        """
-        Tuple containing the correct slices of the data to get the 
-        individual color space components. For example, in :class:`LabData`, 
-        this property would contain ``(L*, a*, b*)``.
-        
-        >>> lab = LabData([[50., 25., 25.], [75., 0., 60.]])
-        >>> lab.components[0]
-        array([[ 50.],
-               [ 75.]])
-        
-        """
-        component_inds = construct_component_inds(self.axis,
-                                                  self.data.ndim,
-                                                  self.num_components,
-                                                  min_ndims=0)
-        return tuple(self[c] for c in component_inds)
-
-    @property
-    def num_components(self) -> int:
-        """
-        :return: The number of components in the color space. For example 
-           :class:`LabData` has three components: L*, a*, b*. 
-        """
-        return 3
 
     def to(self, space: Union[str, type],
            **kwargs) -> ColorSpaceData:
-        """
-        Convert this space to another space.::
-        
-            lab = LabData([50., 25., 25.])
-            xyz = lab.to('xyz')
-        
-        :param space: either the name or the class of the destination color 
-           space. 
-        :return: The new color space data
-
-        """
         to_space, to_class = get_space(space)
         from_space = get_space_name(type(self))
-        self_kwargs = self._get_kwargs()
+        self_kwargs = self.kwargs
         converted_data = convert(self._data,
                                  from_space=from_space,
                                  to_space=to_space,
@@ -229,101 +362,6 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         new_data.set(**kwargs)
         return new_data
 
-    def _get_kwargs(self):
-        return {'axis': self.axis,
-                'illuminant': self.illuminant,
-                'observer': self.observer,
-                'rgbs': self.rgbs,
-                'caa': self.caa,
-                'is_scaled': self.is_scaled}
-
-    @property
-    def data(self) -> np.ndarray:
-        """The stored color data
-        
-        Indexing into the space data instance is equivalent to indexing into the
-        data itself::
-        
-            space.data[inds]
-            
-        is the same as::
-        
-            space[inds]"""
-        b_shape = [-1 if k == self.axis else 1
-                   for k in range(self._data.ndim)]
-        min_value = np.array(self._min_value).reshape(b_shape)
-        max_value = np.array(self._max_value).reshape(b_shape)
-        d = np.clip(self._data, min_value, max_value)
-        return self._scale_factor * d if self.is_scaled else d
-
-    def reset_data_cache(self):
-        """
-        Resets the cached property :attr:`data`
-        :return: None
-        """
-        pass
-
-    @property
-    def axis(self) -> int:
-        """The axis in the data array that the color components lie along."""
-        return self._axis
-
-    @axis.setter
-    def axis(self, a):
-        if a is None:
-            self.axis = get_matching_axis(self.data.shape,
-                                          self.num_components)
-        elif a != self.axis:
-            new_dims = list(range(self.data.ndim))
-            new_dims[a] = self.axis
-            new_dims[self.axis] = a
-            self._data = self._data.transpose(new_dims)
-            self._axis = a
-
-    @property
-    def illuminant(self) -> Illuminant:
-        """The illuminant. This combined with the 
-        :py:attr:`~ColorSpaceDataImpl.observer` 
-        determines the reference white point of the space."""
-        return self._illuminant
-
-    @illuminant.setter
-    def illuminant(self, ill: Illuminant):
-        self.reset_data_cache()
-        self._illuminant = ill
-
-    @property
-    def observer(self) -> Observer:
-        """The observer. This combined with the 
-        :py:attr:`~ColorSpaceDataImpl.illuminant` 
-        determines the reference white point of the space."""
-        return self._observer
-
-    @observer.setter
-    def observer(self, obs: Observer):
-        self.reset_data_cache()
-        self._observer = obs
-
-    @property
-    def rgbs(self) -> RgbSpecification:
-        """The RGB color space specification"""
-        return self._rgbs
-
-    @rgbs.setter
-    def rgbs(self, r: RgbSpecification):
-        self.reset_data_cache()
-        self._rgbs = r
-
-    @property
-    def caa(self) -> ChromaticAdaptationAlgorithm:
-        """The chromatic adaptation algorithm."""
-        return self._caa
-
-    @caa.setter
-    def caa(self, c: ChromaticAdaptationAlgorithm):
-        self.reset_data_cache()
-        self._caa = c
-
 
 @color_space('Spectrum')
 class SpectralData(ColorSpaceDataImpl):
@@ -331,10 +369,11 @@ class SpectralData(ColorSpaceDataImpl):
     Contains raw reflectance spectral data
     
     """
-    _scale_factor = 100
+    scale_factor = 100
 
-    def __init__(self, data: Union[np.ndarray, Iterable[Any], ColorSpaceData],
-                 wavelengths: Union[np.ndarray, Iterable[float]]=None,
+    def __init__(self,
+                 data: Union[np.ndarray, Iterable[Any], ColorSpaceData],
+                 wavelengths: Union[np.ndarray, Iterable[float]],
                  *,
                  axis=None,
                  **kwargs):
@@ -355,16 +394,8 @@ class SpectralData(ColorSpaceDataImpl):
         :param caa: The chromatic adaptation algorithm.
         :type caa: ChromaticAdaptationAlgorithm 
         """
-        if wavelengths is None:
-            if hasattr(data, 'wavelengths') and data.wavelengths is not None:
-                wavelengths = data.wavelengths
-            else:
-                raise TypeError('SpectralData expected wavelength data, but it '
-                                'was not specified.')
         if not isinstance(data, np.ndarray):
             data = np.array(data)
-        if not isinstance(wavelengths, np.ndarray):
-            wavelengths = np.array(wavelengths, copy=True)
         if axis is None:
             if isinstance(data, ColorSpaceData):
                 if data.axis is None:
@@ -376,18 +407,18 @@ class SpectralData(ColorSpaceDataImpl):
         super().__init__(data, axis=axis, **kwargs)
         self._wavelengths = np.array(wavelengths, copy=True)
 
-    @property
-    def num_components(self):
+    def get_num_components(self):
         """The number of wavelengths in the data"""
         return self.wavelengths.size
 
-    @property
-    def wavelengths(self) -> np.ndarray:
+    def get_wavelengths(self) -> np.ndarray:
         """The wavelengths that correspond to the data"""
         return self._wavelengths
 
-    def _get_kwargs(self):
-        kwargs = super()._get_kwargs()
+    wavelengths = property(get_wavelengths)
+
+    def get_kwargs(self):
+        kwargs = super().get_kwargs()
         kwargs['wavelengths'] = self.wavelengths
         return kwargs
 
@@ -405,12 +436,10 @@ class WhitePointSensitive(ColorSpaceDataImpl):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    @ColorSpaceDataImpl.illuminant.setter
-    def illuminant(self, ill: Illuminant):
+    def set_illuminant(self, ill: Illuminant):
         self.change_white_point(ill, self._observer)
 
-    @ColorSpaceDataImpl.observer.setter
-    def observer(self, obs):
+    def set_observer(self, obs):
         self.change_white_point(self._illuminant, obs)
 
     def change_white_point(self, illuminant: Illuminant, observer: Observer):
@@ -452,6 +481,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
                              caa=self._caa)
         self._illuminant = illuminant
         self._observer = observer
+        self.reset_data_cache()
         return self
 
 
@@ -477,7 +507,7 @@ class XyzData(WhitePointSensitive):
         results were combined into the specification of the CIE RGB color 
         space, from which the CIE XYZ color space was derived.* 
     """
-    _scale_factor = 100
+    scale_factor = 100
 
 
 @color_space('xyY')
@@ -537,8 +567,8 @@ class LabData(WhitePointSensitive):
         full name, since they represent L\*, a\* and b\*, to distinguish them 
         from Hunter's L, a, and b.*
     """
-    _min_value = np.array([0., -np.inf, -np.inf])
-    _max_value = np.array([100., np.inf, np.inf])
+    min_value = np.array([0., -np.inf, -np.inf])
+    max_value = np.array([100., np.inf, np.inf])
 
 
 @color_space('CIELCH')
@@ -555,8 +585,8 @@ class LchData(WhitePointSensitive):
         CIELab color wheel) are specified. The CIELab lightness L* remains 
         unchanged. 
     """
-    _min_value = np.array([0., 0., 0.])
-    _max_value = np.array([100., np.inf, 360.])
+    min_value = np.array([0., 0., 0.])
+    max_value = np.array([100., np.inf, 360.])
 
 
 # noinspection PyMethodOverriding
@@ -568,16 +598,14 @@ class RgbsSensitive(WhitePointSensitive):
      
     Any Color space representing RGB data should extend this class.
     """
-    _scale_factor = 255.
-    _min_value = np.array([0., 0., 0.])
-    _max_value = np.array([1., 1., 1.])
+    scale_factor = 255.
+    min_value = np.array([0., 0., 0.])
+    max_value = np.array([1., 1., 1.])
 
-    @WhitePointSensitive.rgbs.setter
-    def rgbs(self, r: RgbSpecification):
+    def set_rgbs(self, r: RgbSpecification):
         self.change_rgbs(r, self._caa)
 
-    @WhitePointSensitive.caa.setter
-    def caa(self, c):
+    def set_caa(self, c):
         self.change_rgbs(self._rgbs, c)
 
     def change_rgbs(self, rgbs, caa):
