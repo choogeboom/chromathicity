@@ -33,13 +33,16 @@ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """
 from abc import ABC, abstractmethod
+from functools import wraps
+from inspect import signature
 from logging import getLogger
-from typing import Union
+from typing import Union, Callable, List, Tuple, Dict
 
 from networkx import DiGraph, shortest_path, NetworkXNoPath
 
 from chromathicity.error import UndefinedConversionError, \
     UndefinedColorSpaceError
+from chromathicity.typing import ColorSpace, Conversion
 
 logger = getLogger(__name__)
 
@@ -122,7 +125,7 @@ class DummyConversionManager(ConversionManager):
 _conversion_manager = GraphConversionManager()
 
 
-def color_conversion(from_space_name, target_space_name):
+def color_conversion(from_space_name: str, target_space_name: str):
     """
     
     Decorator to indicate a function that performs a conversion from one 
@@ -135,26 +138,53 @@ def color_conversion(from_space_name, target_space_name):
     :param target_space_name: Target color space name or type
     """
 
-    def decorator(f):
+    def decorator(f: Conversion) -> Conversion:
         f.start_type = from_space_name
         f.target_type = target_space_name
+
+        from numpy import ndarray
+        from chromathicity.illuminant import Illuminant
+        from chromathicity.observer import Observer
+        from chromathicity.rgbspec import RgbSpecification
+        from chromathicity.chromadapt import ChromaticAdaptationAlgorithm
+
+        f_sig = signature(f)
+        kwarg_names = [n for n, p in f_sig.parameters.items()
+                       if p.kind == p.KEYWORD_ONLY]
+        f._kwarg_names = kwarg_names
+
+        @wraps(f, assigned=('__module__', '__name__', '__qualname__',
+                            '__doc__'))
+        def convert_wrapper(
+                data: ndarray,
+                *args,
+                axis: int=None,
+                illuminant: Illuminant=None,
+                observer: Observer=None,
+                rgbs: RgbSpecification=None,
+                caa: ChromaticAdaptationAlgorithm=None) \
+                -> ndarray:
+            local_vals = locals()
+            kwargs = {n: local_vals[n] for n in kwarg_names}
+            return f(data, *args, **kwargs)
+
         _conversion_manager.add_type_conversion(from_space_name,
-                                                target_space_name, f)
-        return f
+                                                target_space_name,
+                                                convert_wrapper)
+        return convert_wrapper
 
     return decorator
 
 
-def get_conversion_path(from_space, to_space):
+def get_conversion_path(from_space: str, to_space: str) -> List[Conversion]:
     """ Returns a list of functions to apply to perform the conversion """
     return _conversion_manager.get_conversion_path(from_space, to_space)
 
-
 # Stores all named color spaces
-_space_name_to_type_map = {}
+_space_name_to_type_map: Dict[str, ColorSpace] = {}
 
 
-def get_space(space: Union[str, type]):
+def get_space(space: Union[str, ColorSpace]) -> Tuple[str, ColorSpace]:
     """
     Get the space name and class associated with it
     """
@@ -171,7 +201,7 @@ def get_space(space: Union[str, type]):
     return space_name, space_class
 
 
-def get_space_class(space_name: str):
+def get_space_class(space_name: str) -> ColorSpace:
     """
     Get the color space class associated with a color space
     
@@ -190,7 +220,7 @@ def get_space_class(space_name: str):
                         f'{type(space_name).__name__} instead.')
 
 
-def get_space_name(space_class: type):
+def get_space_name(space_class: ColorSpace) -> str:
     """Get the color space name associated with a color space"""
     if isinstance(space_class, type):
         if hasattr(space_class, '__spacename__') and space_class.__spacename__:
@@ -202,7 +232,7 @@ def get_space_name(space_class: type):
                         f'{type(space_class).__name__} instead.')
 
 
-def color_space(name):
+def color_space(name: str) -> Callable[[ColorSpace], ColorSpace]:
     """
     Decorator that registers a class as a color space.
     
@@ -214,11 +244,9 @@ def color_space(name):
        @color_space('test1')
        class TestSpaceData(ColorSpaceDataImpl):
            pass
-       
-   
-    """
 
-    def decorator(cls: type):
+    """
+    def decorator(cls: ColorSpace) -> ColorSpace:
         cls.__spacename__ = name
         _space_name_to_type_map[name] = cls
         return cls
