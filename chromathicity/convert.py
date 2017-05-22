@@ -11,6 +11,7 @@ from chromathicity.manage import color_conversion, get_conversion_path
 from chromathicity.observer import Observer, get_default_observer
 from chromathicity.rgbspec import (RgbSpecification,
                                    get_default_rgb_specification)
+import chromathicity.space_names as names
 # Constants used for L*a*b* conversions
 from chromathicity.util import construct_component_inds, get_matching_axis
 
@@ -18,7 +19,20 @@ LAB_EPS = 0.008856
 LAB_KAPPA = 903.3
 
 
-@color_conversion('CIELAB', 'XYZ_r')
+def convert(data: np.ndarray, from_space: str, to_space: str, *args,
+            **kwargs) -> np.ndarray:
+    """
+    Convert data between spaces
+
+
+    """
+    conversion_path = get_conversion_path(from_space, to_space)
+    for do_conversion_step in conversion_path:
+        data = do_conversion_step(data, *args, **kwargs)
+    return data
+
+
+@color_conversion(names.LAB, names.NORMALIZED_XYZ)
 def lab2xyzr(lab: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert LAB to normalized XYZ
@@ -44,8 +58,8 @@ def lab2xyzr(lab: np.ndarray, *, axis: int=None) -> np.ndarray:
     return xyzr
 
 
-@color_conversion('CIELAB', 'CIELCH')
-def lab2lchab(lab: np.ndarray, *, axis: int=None) -> np.ndarray:
+@color_conversion(names.LAB, names.LCH)
+def lab2lch(lab: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert L*a*b* to LCh
     
@@ -68,8 +82,8 @@ def lab2lchab(lab: np.ndarray, *, axis: int=None) -> np.ndarray:
     return lch
 
 
-@color_conversion('CIELCH', 'CIELAB')
-def lchab2lab(lch: np.ndarray, *, axis: int=None) -> np.ndarray:
+@color_conversion(names.LCH, names.LAB)
+def lch2lab(lch: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Converts LCh to L*a*b*
     
@@ -91,7 +105,7 @@ def lchab2lab(lch: np.ndarray, *, axis: int=None) -> np.ndarray:
     return lab
 
 
-@color_conversion('lRGB', 'RGB')
+@color_conversion(names.LINEAR_RGB, names.RGB)
 def lrgb2rgb(lrgb: np.ndarray, *, rgbs: RgbSpecification=None) -> np.ndarray:
     """
     Convert linear RGB to companded RGB
@@ -105,7 +119,7 @@ def lrgb2rgb(lrgb: np.ndarray, *, rgbs: RgbSpecification=None) -> np.ndarray:
     return rgbs.compand(lrgb)
 
 
-@color_conversion('lRGB', 'CIEXYZ')
+@color_conversion(names.LINEAR_RGB, names.XYZ)
 def lrgb2xyz(lrgb: np.ndarray,
              *,
              axis: int=None,
@@ -169,7 +183,7 @@ def lrgb2xyz(lrgb: np.ndarray,
         return xyz
 
 
-@color_conversion('RGB', 'lRGB')
+@color_conversion(names.RGB, names.LINEAR_RGB)
 def rgb2lrgb(rgb: np.ndarray,
              *,
              rgbs: RgbSpecification=None) -> np.ndarray:
@@ -185,7 +199,7 @@ def rgb2lrgb(rgb: np.ndarray,
     return rgbs.inverse_compand(rgb)
 
 
-@color_conversion('RGB', 'HSL')
+@color_conversion(names.RGB, names.HSL)
 def rgb2hsl(rgb: np.ndarray,
             *,
             axis: int=None) -> np.ndarray:
@@ -215,7 +229,7 @@ def rgb2hsl(rgb: np.ndarray,
     return hsl
 
 
-@color_conversion('HSL', 'RGB')
+@color_conversion(names.HSL, names.RGB)
 def hsl2rgb(hsl: np.ndarray,
             *,
             axis: int=None) -> np.ndarray:
@@ -247,7 +261,7 @@ def hsl2rgb(hsl: np.ndarray,
         return rgb1 + little_m
 
 
-@color_conversion('RGB', 'HSI')
+@color_conversion(names.RGB, names.HSI)
 def rgb2hsi(rgb: np.ndarray,
             *,
             axis: int=None) -> np.ndarray:
@@ -278,7 +292,7 @@ def rgb2hsi(rgb: np.ndarray,
     return hsi
 
 
-@color_conversion('HSI', 'RGB')
+@color_conversion(names.HSI, names.RGB)
 def hsi2rgb(hsi: np.ndarray,
             *,
             axis: int=None) -> np.ndarray:
@@ -307,7 +321,7 @@ def hsi2rgb(hsi: np.ndarray,
         return rgb1 + little_m
 
 
-@color_conversion('RGB', 'HSV')
+@color_conversion(names.RGB, names.HSV)
 def rgb2hsv(rgb: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert from RGB to Hue Saturation Value (HSV)
@@ -333,7 +347,7 @@ def rgb2hsv(rgb: np.ndarray, *, axis: int=None) -> np.ndarray:
     return hsv
 
 
-@color_conversion('HSV', 'RGB')
+@color_conversion(names.HSV, names.RGB)
 def hsv2rgb(hsv: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert from HSV to RGB
@@ -359,7 +373,7 @@ def hsv2rgb(hsv: np.ndarray, *, axis: int=None) -> np.ndarray:
         return rgb1 + little_m
 
 
-@color_conversion('RGB', 'HCY')
+@color_conversion(names.RGB, names.HCY)
 def rgb2hcy(rgb: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     Convert from RGB to Hue, Chroma, Luma (Y'_601)
@@ -383,7 +397,7 @@ def rgb2hcy(rgb: np.ndarray, *, axis: int=None) -> np.ndarray:
     return hcy
 
 
-@color_conversion('HCY', 'RGB')
+@color_conversion(names.HCY, names.RGB)
 def hcy2rgb(hcy: np.ndarray, *, axis: int=None) -> np.ndarray:
     """
     
@@ -397,10 +411,11 @@ def hcy2rgb(hcy: np.ndarray, *, axis: int=None) -> np.ndarray:
     inds = construct_component_inds(axis, hcy.ndim, 3)
 
     h_prime = hcy[inds[0]] / 60.
-    x = hcy[inds[1]] * (1 - np.abs(np.mod(h_prime, 2) - 1))  # type: np.ndarray
+    x: np.ndarray = hcy[inds[1]] * (1 - np.abs(np.mod(h_prime, 2) - 1))
     rgb1 = _compute_rgb1(hcy.shape, inds, h_prime, x, hcy[inds[1]])
-    little_m = hcy[inds[2]] - (0.299*rgb1[inds[0]] + 0.587*rgb1[inds[1]]
-                               + 0.114*rgb1[inds[2]])
+    little_m: np.ndarray = hcy[inds[2]] - (0.299*rgb1[inds[0]]
+                                           + 0.587*rgb1[inds[1]]
+                                           + 0.114*rgb1[inds[2]])
 
     if little_m.ndim > rgb1.ndim:
         # This only happens in the 1D case
@@ -463,7 +478,7 @@ def _compute_rgb1(shape, inds, h_prime, x, chroma) -> np.ndarray:
     return rgb1
 
 
-@color_conversion('Spectrum', 'CIEXYZ')
+@color_conversion(names.REFLECTANCE_SPECTRUM, names.XYZ)
 def spectrum2xyz(spectrum: np.ndarray,
                  wavelengths: np.ndarray,
                  *,
@@ -516,7 +531,7 @@ def spectrum2xyz(spectrum: np.ndarray,
     return np.concatenate((x, y, z), axis=axis)
 
 
-@color_conversion('xyY', 'CIEXYZ')
+@color_conversion(names.XYY, names.XYZ)
 def xyy2xyz(xyy, *, axis: int=None) -> np.ndarray:
     """
     converts from xyY to XYZ
@@ -543,7 +558,7 @@ def xyy2xyz(xyy, *, axis: int=None) -> np.ndarray:
     return xyz
 
 
-@color_conversion('CIEXYZ', 'lRGB')
+@color_conversion(names.XYZ, names.LINEAR_RGB)
 def xyz2lrgb(xyz: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=None,
@@ -605,7 +620,7 @@ def xyz2lrgb(xyz: np.ndarray, *,
     return lrgb.transpose(new_dims)
 
 
-@color_conversion('CIEXYZ', 'xyY')
+@color_conversion(names.XYZ, names.XYY)
 def xyz2xyy(xyz: np.ndarray, *,
             axis: int=None,
             illuminant: Illuminant=None,
@@ -697,7 +712,7 @@ def xyz2xyz(source_xyz: np.ndarray,
     return destination_xyz.transpose(new_dims)
 
 
-@color_conversion('CIEXYZ', 'XYZ_r')
+@color_conversion(names.XYZ, names.NORMALIZED_XYZ)
 def xyz2xyzr(xyz: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=get_default_illuminant(),
@@ -719,7 +734,7 @@ def xyz2xyzr(xyz: np.ndarray, *,
     return xyz / white_point
 
 
-@color_conversion('XYZ_r', 'CIELAB')
+@color_conversion(names.NORMALIZED_XYZ, names.LAB)
 def xyzr2lab(xyzr: np.ndarray, *,
              axis: int=None) -> np.ndarray:
     """
@@ -747,7 +762,7 @@ def xyzr2lab(xyzr: np.ndarray, *,
     return lab
 
 
-@color_conversion('XYZ_r', 'CIEXYZ')
+@color_conversion(names.NORMALIZED_XYZ, names.XYZ)
 def xyzr2xyz(xyzr: np.ndarray, *,
              axis: int=None,
              illuminant: Illuminant=None,
@@ -774,16 +789,3 @@ def xyzr2xyz(xyzr: np.ndarray, *,
                       for dim in range(len(xyzr.shape)))
     white_point = illuminant.get_white_point(observer).reshape(new_shape)
     return xyzr * white_point
-
-
-def convert(data: np.ndarray, from_space: str, to_space: str, *args,
-            **kwargs) -> np.ndarray:
-    """
-    Convert data between spaces
-    
-    
-    """
-    conversion_path = get_conversion_path(from_space, to_space)
-    for do_conversion_step in conversion_path:
-        data = do_conversion_step(data, *args, **kwargs)
-    return data

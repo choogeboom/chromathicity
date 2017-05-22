@@ -1,12 +1,11 @@
-from typing import Type, Union, Iterable, Callable, Any, Optional
+from typing import Type, Callable, Any, Optional
 
 from numpy import ndarray
+
+from chromathicity.chromadapt import ChromaticAdaptationAlgorithm
 from chromathicity.illuminant import Illuminant
 from chromathicity.observer import Observer
 from chromathicity.rgbspec import RgbSpecification
-from chromathicity.chromadapt import ChromaticAdaptationAlgorithm
-
-ArrayLike = Union['ndarray', float, Iterable['ArrayLike']]
 
 ColorSpace = Type['chromathicity.ColorSpaceData']
 

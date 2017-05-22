@@ -200,14 +200,14 @@ class TestHcy:
 
 class TestLCHab:
     def test_lab2lchab_1d(self):
-        run_forward_reverse(convert.lab2lchab,
-                            convert.lchab2lab,
+        run_forward_reverse(convert.lab2lch,
+                            convert.lch2lab,
                             np.array([50., 25., 25.]),
                             np.array([50., np.sqrt(2 * 25. ** 2), 45.]))
 
     def test_lab2lchab_2d(self):
-        run_forward_reverse(convert.lab2lchab,
-                            convert.lchab2lab,
+        run_forward_reverse(convert.lab2lch,
+                            convert.lch2lab,
                             np.array([[50., 25., 25.], [30., 0., 45.]]),
                             np.array([[50., np.sqrt(2 * 25. ** 2), 45.],
                                       [30., 45., 90.]]))

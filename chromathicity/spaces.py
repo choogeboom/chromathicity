@@ -20,9 +20,12 @@ from chromathicity.manage import get_space, get_space_name, color_space
 from chromathicity.observer import get_default_observer, Observer
 from chromathicity.rgbspec import (get_default_rgb_specification,
                                    RgbSpecification)
-from chromathicity.typing import ArrayLike
+import chromathicity.space_names as names
 from chromathicity.util import SetGet, construct_component_inds, \
     get_matching_axis, lazy_property
+
+
+ArrayLike = Union[np.ndarray, Iterable['ArrayLike']]
 
 
 class ColorSpaceData(ABC):
@@ -49,7 +52,7 @@ class ColorSpaceData(ABC):
             space[inds]"""
         pass
 
-    data = lazy_property(get_data)
+    data: np.ndarray = lazy_property(get_data)
 
     def reset_data_cache(self):
         """
@@ -72,7 +75,7 @@ class ColorSpaceData(ABC):
     def set_axis(self, a: int):
         pass
 
-    axis = lazy_property(get_axis, set_axis)
+    axis: int = lazy_property(get_axis, set_axis)
 
     @abstractmethod
     def get_illuminant(self) -> Illuminant:
@@ -86,7 +89,7 @@ class ColorSpaceData(ABC):
     def set_illuminant(self, ill: Illuminant):
         pass
 
-    illuminant = lazy_property(get_illuminant, set_illuminant)
+    illuminant: Illuminant = lazy_property(get_illuminant, set_illuminant)
 
     @abstractmethod
     def get_observer(self) -> Observer:
@@ -101,7 +104,7 @@ class ColorSpaceData(ABC):
     def set_observer(self, obs: Observer):
         pass
 
-    observer = lazy_property(get_observer, set_observer)
+    observer: Observer = lazy_property(get_observer, set_observer)
 
     @abstractmethod
     def get_rgbs(self) -> RgbSpecification:
@@ -114,7 +117,7 @@ class ColorSpaceData(ABC):
     def set_rgbs(self, r: RgbSpecification):
         pass
 
-    rgbs = lazy_property(get_rgbs, set_rgbs)
+    rgbs: RgbSpecification = lazy_property(get_rgbs, set_rgbs)
 
     @abstractmethod
     def get_caa(self) -> ChromaticAdaptationAlgorithm:
@@ -127,7 +130,7 @@ class ColorSpaceData(ABC):
     def set_caa(self, c: ChromaticAdaptationAlgorithm):
         pass
 
-    caa = lazy_property(get_caa, set_caa)
+    caa: ChromaticAdaptationAlgorithm = lazy_property(get_caa, set_caa)
 
     @abstractmethod
     def get_is_scaled(self) -> bool:
@@ -143,7 +146,7 @@ class ColorSpaceData(ABC):
     def set_is_scaled(self, tf: bool):
         pass
 
-    is_scaled = lazy_property(get_is_scaled, set_is_scaled)
+    is_scaled: bool = lazy_property(get_is_scaled, set_is_scaled)
 
     def get_components(self) -> Tuple[np.ndarray, ...]:
         """
@@ -163,7 +166,7 @@ class ColorSpaceData(ABC):
                                                   min_ndims=0)
         return tuple(self[c] for c in component_inds)
 
-    components = lazy_property(get_components)
+    components: Tuple[np.ndarray, ...] = lazy_property(get_components)
 
     def get_num_components(self) -> int:
         """
@@ -172,10 +175,10 @@ class ColorSpaceData(ABC):
         """
         return len(self.components)
 
-    num_components = lazy_property(get_num_components)
+    num_components: int = lazy_property(get_num_components)
 
     @abstractmethod
-    def to(self, space: Union[str, type]):
+    def to(self, space: Union[str, type]) -> 'ColorSpaceData':
         """
         Convert this space to another space.::
         
@@ -201,7 +204,7 @@ class ColorSpaceData(ABC):
                 'caa': self.caa,
                 'is_scaled': self.is_scaled}
 
-    kwargs = property(get_kwargs)
+    kwargs: dict = property(get_kwargs)
 
     def __array__(self, dtype) -> np.ndarray:
         if dtype == self.data.dtype:
@@ -240,18 +243,18 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     # Controls how scaling works. If :attr:`~ColorSpaceDataImpl.is_scaled` is
     # ``True``, then the data will be scaled by this value
-    scale_factor = 1.  # type: ArrayLike
+    scale_factor: np.ndarray = np.array([1.])
 
     # The minimum allowed value for a color space. Data will be clipped to be
     # no less than the value of ``min_value``.
-    min_value = [-np.inf]  # type: ArrayLike
+    min_value: np.ndarray = np.array([-np.inf])
 
     # The maximum allowed value for a color space. Data will be clipped to be
     # no more than the value of ``max_value``.
-    max_value = [np.inf]  # type: ArrayLike
+    max_value: np.ndarray = [np.inf]
 
     def __init__(self,
-                 data: Union[np.ndarray, Iterable[float]],
+                 data: ArrayLike,
                  *,
                  axis: int=None,
                  illuminant: Illuminant=get_default_illuminant(),
@@ -364,7 +367,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         return new_data
 
 
-@color_space('Spectrum')
+@color_space(names.REFLECTANCE_SPECTRUM)
 class SpectralData(ColorSpaceDataImpl):
     """
     Contains raw reflectance spectral data
@@ -405,6 +408,7 @@ class SpectralData(ColorSpaceDataImpl):
                     axis = data.axis
             else:
                 axis = get_matching_axis(data.shape, len(wavelengths))
+        # noinspection PyArgumentList
         super().__init__(data, axis=axis, **kwargs)
         self._wavelengths = np.array(wavelengths, copy=True)
 
@@ -486,7 +490,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
         return self
 
 
-@color_space('CIEXYZ')
+@color_space(names.XYZ)
 class XyzData(WhitePointSensitive):
     """
     Represents data from the CIE XYZ color space. 
@@ -511,7 +515,7 @@ class XyzData(WhitePointSensitive):
     scale_factor = 100
 
 
-@color_space('xyY')
+@color_space(names.XYY)
 class XyyData(WhitePointSensitive):
     """
     Represents data from the CIE xyY color space
@@ -537,7 +541,7 @@ class XyyData(WhitePointSensitive):
     pass
 
 
-@color_space('XYZ_r')
+@color_space(names.NORMALIZED_XYZ)
 class NormalizedXyzData(WhitePointSensitive):
     """
     This space is the CIE XYZ space, normalized by the white point
@@ -545,7 +549,7 @@ class NormalizedXyzData(WhitePointSensitive):
     pass
 
 
-@color_space('CIELAB')
+@color_space(names.LAB)
 class LabData(WhitePointSensitive):
     """
     Represents the CIE L*a*b* color space.
@@ -572,7 +576,7 @@ class LabData(WhitePointSensitive):
     max_value = np.array([100., np.inf, np.inf])
 
 
-@color_space('CIELCH')
+@color_space(names.LCH)
 class LchData(WhitePointSensitive):
     """
     Represents the CIELCh color space.
@@ -630,7 +634,7 @@ class RgbsSensitive(WhitePointSensitive):
         self._caa = caa
 
 
-@color_space('lRGB')
+@color_space(names.LINEAR_RGB)
 class LinearRgbData(RgbsSensitive):
     """
     Represents data that is uncompanded RGB
@@ -638,21 +642,27 @@ class LinearRgbData(RgbsSensitive):
     pass
 
 
-@color_space('RGB')
+@color_space(names.RGB)
 class RgbData(RgbsSensitive):
     pass
 
 
-@color_space('HSL')
+@color_space(names.HSL)
 class HslData(RgbsSensitive):
     pass
 
 
-@color_space('HSI')
+@color_space(names.HSI)
 class HsiData(RgbsSensitive):
     pass
 
 
-@color_space('HCY')
+@color_space(names.HCY)
 class HcyData(RgbsSensitive):
     pass
+
+
+@color_space(names.HSV)
+class HsvData(RgbsSensitive):
+    pass
+

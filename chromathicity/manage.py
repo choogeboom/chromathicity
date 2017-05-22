@@ -102,13 +102,14 @@ class GraphConversionManager(ConversionManager):
         return [self.conversion_graph.get_edge_data(node_a, node_b)[cf]
                 for node_a, node_b in zip(path[:-1], path[1:])]
 
-    def add_type_conversion(self, start_type, target_type, conversion_function):
-        super().add_type_conversion(start_type,
-                                    target_type,
+    def add_type_conversion(self, start_space_name, target_space_name,
+                            conversion_function):
+        super().add_type_conversion(start_space_name,
+                                    target_space_name,
                                     conversion_function)
         self.conversion_graph.add_edge(
-            start_type,
-            target_type,
+            start_space_name,
+            target_space_name,
             {'conversion_function': conversion_function})
 
 
@@ -124,6 +125,7 @@ class DummyConversionManager(ConversionManager):
 
 
 _conversion_manager = GraphConversionManager()
+
 BareConversion = Callable[[np.ndarray, Any], np.ndarray]
 
 
@@ -132,10 +134,16 @@ def color_conversion(from_space_name: str, target_space_name: str) \
     """
     
     Decorator to indicate a function that performs a conversion from one 
-    color space to another. This decorator will return the original function 
-    unmodified, however it will be registered in the _conversion_manager so 
-    it can be used to perform color space transformations between color 
-    spaces that do not have direct conversion functions (e.g., Luv to CMYK). 
+    color space to another. This decorator wraps the original function, 
+    giving every conversion the same signature:
+    
+        conversion(data, *args, axis, illuminant, observer, rgbs, caa)
+    
+    In addition, the function will be registered as a conversion, so it can 
+    be used to perform color space transformations between color spaces that 
+    do not have direct conversion functions (e.g., Luv to CMYK). The path 
+    between two spaces can be found using the :func:`get_conversion_path` 
+    function. 
     
     :param from_space_name: Starting color space name or type
     :param target_space_name: Target color space name or type
@@ -179,7 +187,13 @@ def color_conversion(from_space_name: str, target_space_name: str) \
 
 
 def get_conversion_path(from_space: str, to_space: str) -> List[Conversion]:
-    """ Returns a list of functions to apply to perform the conversion """
+    """
+    Returns a list of functions to apply to perform the conversion. Raises an 
+    :class:`UndefinedConversionError` if a conversion path is not found. 
+    
+    :param from_space: The starting space name
+    :param to_space: the destination space name
+    """
     return _conversion_manager.get_conversion_path(from_space, to_space)
 
 # Stores all named color spaces
@@ -191,15 +205,13 @@ def get_space(space: Union[str, ColorSpace]) -> Tuple[str, ColorSpace]:
     Get the space name and class associated with it
     """
     if isinstance(space, str):
-        if space in _space_name_to_type_map:
-            space_class = _space_name_to_type_map[space]
-        else:
-            raise UndefinedColorSpaceError(space)
-    elif hasattr(space, '__spacename__') and space.__spacename__:
-        space_class = space
+        space_name = space
+        space_class = get_space_class(space)
     else:
-        raise TypeError(f'Illegal color space type: {type(space).__name__}')
-    space_name = space_class.__spacename__
+        if not isinstance(space, type):
+            space = type(space)
+        space_class = space
+        space_name = get_space_name(space_class)
     return space_name, space_class
 
 
@@ -209,7 +221,7 @@ def get_space_class(space_name: str) -> ColorSpace:
     
     :param space_name: The name of the space
     
-    >>> get_space_class('XYZ')
+    >>> get_space_class('CIEXYZ')
     XyzData
     """
     if isinstance(space_name, str):

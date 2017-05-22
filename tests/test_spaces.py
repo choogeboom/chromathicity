@@ -11,8 +11,10 @@ def test_get_space():
     assert chromathicity.manage.get_space(sp.XyzData) == ('CIEXYZ', sp.XyzData)
     with raises(UndefinedColorSpaceError):
         chromathicity.manage.get_space('peanut')
+    with raises(UndefinedColorSpaceError):
+        chromathicity.manage.get_space(2)
     with raises(TypeError):
-        chromathicity.manage.get_space(sp.WhitePointSensitive)
+        chromathicity.manage.get_space_name(2)
 
 
 def test_spectral_data():
@@ -29,6 +31,3 @@ def test_xyz_data():
     xyz = sp.XyzData([22.53731, 18.418652, 9.526464], is_scaled=True)
     lab = xyz.to('CIELAB')
     np.testing.assert_allclose(lab.data, np.array([50., 25., 25.]))
-
-
-
