@@ -36,14 +36,17 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from inspect import signature
 from logging import getLogger
-from typing import Union, Callable, List, Tuple, Dict, Any
+from typing import Union, Callable, List, Tuple, Dict, Any, Optional, Type
 
 import numpy as np
 from networkx import DiGraph, shortest_path, NetworkXNoPath
 
 from chromathicity.error import UndefinedConversionError, \
     UndefinedColorSpaceError
-from chromathicity.typing import ColorSpace, Conversion
+from chromathicity.illuminant import Illuminant
+from chromathicity.observer import Observer
+from chromathicity.rgbspec import RgbSpecification
+from chromathicity.chromadapt import ChromaticAdaptationAlgorithm
 
 logger = getLogger(__name__)
 
@@ -66,13 +69,16 @@ class ConversionManager(ABC):
                      target_type)
 
     @abstractmethod
-    def get_conversion_path(self, start_type, target_type):
+    def get_conversion_path(self, start_space_name, target_space_name):
         """
-        Return a list of conversion functions that if applied iteratively on a color of the start_type color space result
-        in a color in the result_type color space.
-        Raises an UndefinedConversionError if no valid conversion path can be found.
-        :param start_type: Starting color space type.
-        :param target_type: Target color space type.
+        Return a list of conversion functions that, if applied iteratively on 
+        a color of the ``start_space_name`` color space, result in a color in 
+        the ``result_space_name`` color space. Raises an 
+        :exc:`UndefinedConversionError` if no valid conversion path can be 
+        found. 
+        
+        :param start_space_name: Starting color space type.
+        :param target_space_name: Target color space type.
         :return: List of conversion functions.
         """
         pass
@@ -83,18 +89,20 @@ class GraphConversionManager(ConversionManager):
         super().__init__()
         self.conversion_graph = DiGraph()
 
-    def get_conversion_path(self, start_type, target_type):
-        if start_type not in self.conversion_graph:
-            raise UndefinedColorSpaceError(start_type)
-        if target_type not in self.conversion_graph:
-            raise UndefinedColorSpaceError(target_type)
+    def get_conversion_path(self, start_space_name, target_space_name):
+        if start_space_name not in self.conversion_graph:
+            raise UndefinedColorSpaceError(start_space_name)
+        if target_space_name not in self.conversion_graph:
+            raise UndefinedColorSpaceError(target_space_name)
         try:
-            # Retrieve node sequence that leads from start_type to target_type.
-            path = shortest_path(self.conversion_graph, start_type, target_type)
+            # Retrieve node sequence that leads from start_space_name to
+            # target_space_name.
+            path = shortest_path(self.conversion_graph, start_space_name,
+                                 target_space_name)
         except NetworkXNoPath:
             raise UndefinedConversionError(
-                start_type,
-                target_type,
+                start_space_name,
+                target_space_name,
             )
         # Look up edges between nodes and retrieve the conversion function
         # for each edge.
@@ -114,22 +122,42 @@ class GraphConversionManager(ConversionManager):
 
 
 class DummyConversionManager(ConversionManager):
-    def add_type_conversion(self, start_type, target_type, conversion_function):
+    def add_type_conversion(self, start_space_name, target_space_name,
+                            conversion_function):
         pass
 
-    def get_conversion_path(self, start_type, target_type):
+    def get_conversion_path(self, start_space_name, target_space_name):
         raise UndefinedConversionError(
-            start_type,
-            target_type,
+            start_space_name,
+            target_space_name,
         )
 
 
 _conversion_manager = GraphConversionManager()
 
+# A type variable for color space types.
+ColorSpace = Type['chromathicity.ColorSpaceData']
+
+# A type variable for raw conversions before they are passed to the conversion
+# decorator.
 BareConversion = Callable[[np.ndarray, Any], np.ndarray]
 
+# After applying the color_conversion decorator, bare conversions will have the
+# following signature.
+Conversion = Callable[
+    [
+        np.ndarray,
+        Any,
+        Optional[int],
+        Optional[Illuminant],
+        Optional[Observer],
+        Optional[RgbSpecification],
+        Optional[ChromaticAdaptationAlgorithm]
+    ],
+    np.ndarray]
 
-def color_conversion(from_space_name: str, target_space_name: str) \
+
+def color_conversion(from_space_name: str, to_space_name: str) \
         -> Callable[[BareConversion], Conversion]:
     """
     
@@ -146,21 +174,16 @@ def color_conversion(from_space_name: str, target_space_name: str) \
     function. 
     
     :param from_space_name: Starting color space name or type
-    :param target_space_name: Target color space name or type
+    :param to_space_name: Target color space name or type
     """
 
     def decorator(f: BareConversion) -> Conversion:
         f.start_type = from_space_name
-        f.target_type = target_space_name
-
-        from chromathicity.illuminant import Illuminant
-        from chromathicity.observer import Observer
-        from chromathicity.rgbspec import RgbSpecification
-        from chromathicity.chromadapt import ChromaticAdaptationAlgorithm
+        f.target_type = to_space_name
 
         f_sig = signature(f)
-        kwarg_names = [n for n, p in f_sig.parameters.items()
-                       if p.kind == p.KEYWORD_ONLY]
+        kwarg_names = {n for n, p in f_sig.parameters.items()
+                       if p.kind == p.KEYWORD_ONLY}
         f._kwarg_names = kwarg_names
 
         @wraps(f, assigned=('__module__', '__name__', '__qualname__',
@@ -175,11 +198,12 @@ def color_conversion(from_space_name: str, target_space_name: str) \
                 caa: ChromaticAdaptationAlgorithm=None) \
                 -> np.ndarray:
             local_values = locals()
-            kwargs = {n: local_values[n] for n in kwarg_names}
+            kwargs = {n: local_values[n]
+                      for n in local_values.keys() & kwarg_names}
             return f(data, *args, **kwargs)
 
         _conversion_manager.add_type_conversion(from_space_name,
-                                                target_space_name,
+                                                to_space_name,
                                                 convert_wrapper)
         return convert_wrapper
 

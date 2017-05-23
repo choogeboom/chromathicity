@@ -14,7 +14,6 @@ import numpy as np
 from chromathicity.chromadapt import (
     get_default_chromatic_adaptation_algorithm,
     ChromaticAdaptationAlgorithm)
-from chromathicity.convert import convert
 from chromathicity.illuminant import get_default_illuminant, Illuminant
 from chromathicity.manage import get_space, get_space_name, color_space
 from chromathicity.observer import get_default_observer, Observer
@@ -53,13 +52,6 @@ class ColorSpaceData(ABC):
         pass
 
     data: np.ndarray = lazy_property(get_data)
-
-    def reset_data_cache(self):
-        """
-        Resets the cached property :attr:`data`
-        :return: None
-        """
-        pass
 
     @abstractmethod
     def get_axis(self) -> int:
@@ -173,7 +165,7 @@ class ColorSpaceData(ABC):
         :return: The number of components in the color space. For example 
            :class:`LabData` has three components: L*, a*, b*. 
         """
-        return len(self.components)
+        return 3
 
     num_components: int = lazy_property(get_num_components)
 
@@ -182,8 +174,8 @@ class ColorSpaceData(ABC):
         """
         Convert this space to another space.::
         
-            lab = LabData([50., 25., 25.])
-            xyz = lab.to('xyz')
+            >>> lab = LabData([50., 25., 25.])
+            >>> xyz = lab.to(XyzData)
         
         :param space: either the name or the class of the destination color 
            space. 
@@ -348,10 +340,10 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
     def set_is_scaled(self, is_scaled: bool) -> None:
         self._is_scaled = is_scaled
-        self.reset_data_cache()
 
     def to(self, space: Union[str, type],
            **kwargs) -> ColorSpaceData:
+        from chromathicity.convert import convert
         to_space, to_class = get_space(space)
         from_space = get_space_name(type(self))
         self_kwargs = self.kwargs
@@ -456,7 +448,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
         :param observer: The new observer
         :return: self
         """
-        from chromathicity.convert import xyz2xyz
+        from chromathicity.convert import xyz2xyz, convert
 
         source_white_point = self._illuminant.get_white_point(self._observer)
         destination_white_point = illuminant.get_white_point(observer)
@@ -486,7 +478,6 @@ class WhitePointSensitive(ColorSpaceDataImpl):
                              caa=self._caa)
         self._illuminant = illuminant
         self._observer = observer
-        self.reset_data_cache()
         return self
 
 
@@ -558,7 +549,7 @@ class LabData(WhitePointSensitive):
     
         *CIE L\*a\*b\* (CIELAB) is a color space specified by the International 
         Commission on Illumination (French Commission internationale de 
-        l'éclairage, hence its CIE initialism). It describes all the colors 
+        l'éclairage, hence its CIE initials). It describes all the colors 
         visible to the human eye and was created to serve as a 
         device-independent model to be used as a reference.* 
 
@@ -614,6 +605,8 @@ class RgbsSensitive(WhitePointSensitive):
         self.change_rgbs(self._rgbs, c)
 
     def change_rgbs(self, rgbs, caa):
+        from chromathicity.convert import convert
+
         xyz = convert(self._data,
                       from_space=self.__spacename__,
                       to_space='xyz',
@@ -665,4 +658,3 @@ class HcyData(RgbsSensitive):
 @color_space(names.HSV)
 class HsvData(RgbsSensitive):
     pass
-
