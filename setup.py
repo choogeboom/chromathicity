@@ -1,7 +1,7 @@
 from setuptools import setup
 
 CLASSIFIERS = [
-    'Development Status :: 3 - Alpha',
+    'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
     'License :: OSI Approved :: BSD License',
     'Natural Language :: English',
@@ -16,7 +16,7 @@ KEYWORDS = 'color color-space cielab ciexyz math conversion convert'
 
 setup(
     name='chromathicity',
-    version='0.2.0',
+    version='0.3.0',
     description='Extensible color conversions',
     long_description='',
     url='https://hoogamaphone.github.io/chromathicity/',
