@@ -11,17 +11,11 @@ Basic Interface
    :members:
 
 
-.. autoclass:: chromathicity.spaces.ColorSpaceDataImpl
-   :members:
-   :inherited-members:
-
-
 Spectral Data
 -------------
 
-.. autoclass:: chromathicity.spaces.SpectralData
+.. autoclass:: chromathicity.spaces.ReflectanceSpectrumData
    :members:
-   :inherited-members:
 
 
 CIE Spaces
@@ -43,10 +37,17 @@ RGB Spaces
 Defining New Spaces
 -------------------
 
-New color spaces should extend :class:`ColorSpaceDataImpl`, and use the
-:func:`color_space` decorator to register the name of the color space
+New color spaces should extend :class:`~chromathicity.spaces.ColorSpaceData`,
+and use the :func:`~chromathicity.spaces.color_space` decorator to register the
+name of the color space.
 
 .. autofunction:: chromathicity.spaces.color_space
+
+The easiest way to create a new color space is to extend one of the following
+classes, which take care of many implementation details.
+
+.. autoclass:: chromathicity.spaces.ColorSpaceDataImpl
+   :members:
 
 .. autoclass:: chromathicity.spaces.WhitePointSensitive
    :members:

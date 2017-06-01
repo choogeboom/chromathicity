@@ -44,109 +44,354 @@
             
   <h1>Source code for chromathicity.spaces</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">:mod: chromathicity.spaces -- Color space objects</span>
-<span class="sd">===================================</span>
-<span class="sd">.. module:: chromathicity.spaces</span>
+<span class="sd">Color space objects</span>
+<span class="sd">===================</span>
 <span class="sd">   </span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="k">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Union</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Callable</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
+<span class="kn">import</span> <span class="nn">chromathicity.space_names</span> <span class="k">as</span> <span class="nn">names</span>
 <span class="kn">from</span> <span class="nn">chromathicity.chromadapt</span> <span class="k">import</span> <span class="p">(</span>
     <span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">,</span>
     <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">convert</span>
-<span class="kn">from</span> <span class="nn">chromathicity.error</span> <span class="k">import</span> <span class="n">raise_not_implemented</span>
+<span class="kn">from</span> <span class="nn">chromathicity.error</span> <span class="k">import</span> <span class="n">UndefinedColorSpaceError</span>
 <span class="kn">from</span> <span class="nn">chromathicity.illuminant</span> <span class="k">import</span> <span class="n">get_default_illuminant</span><span class="p">,</span> <span class="n">Illuminant</span>
-<span class="kn">from</span> <span class="nn">chromathicity.manage</span> <span class="k">import</span> <span class="n">get_space</span><span class="p">,</span> <span class="n">get_space_name</span><span class="p">,</span> <span class="n">color_space</span>
 <span class="kn">from</span> <span class="nn">chromathicity.observer</span> <span class="k">import</span> <span class="n">get_default_observer</span><span class="p">,</span> <span class="n">Observer</span>
 <span class="kn">from</span> <span class="nn">chromathicity.rgbspec</span> <span class="k">import</span> <span class="p">(</span><span class="n">get_default_rgb_specification</span><span class="p">,</span>
                                    <span class="n">RgbSpecification</span><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">chromathicity.util</span> <span class="k">import</span> <span class="n">SetGet</span><span class="p">,</span> <span class="n">construct_component_inds</span><span class="p">,</span> \
-    <span class="n">get_matching_axis</span>
+    <span class="n">get_matching_axis</span><span class="p">,</span> <span class="n">lazy_property</span>
 
 
 <div class="viewcode-block" id="ColorSpaceData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData">[docs]</a><span class="k">class</span> <span class="nc">ColorSpaceData</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Defines the main interface for all color space data classes. </span>
-<span class="sd">    :class:`ColorSpaceDataImpl` provides a minimal implementation of this </span>
-<span class="sd">    interface, so all color space data classes should extend that class instead</span>
-<span class="sd">    of this one.</span>
+<span class="sd">    :class:`ColorSpaceDataImpl` provides a full implementation of this </span>
+<span class="sd">    interface, which makes it much easier to define custom color spaces.</span>
+<span class="sd">    </span>
+<span class="sd">    Since this class is designed to be extended, every property calls a </span>
+<span class="sd">    respective getter and setter method, so that overriding is much easier</span>
+<span class="sd">    in subclasses.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">__spacename__</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
-    <span class="nd">@property</span>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+    <span class="c1"># Controls how scaling works. If :attr:`~ColorSpaceDataImpl.is_scaled` is</span>
+    <span class="c1"># ``True``, then the data will be scaled by this value</span>
+    <span class="n">max_value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">]</span>
 
-    <span class="nd">@property</span>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">axis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+    <span class="c1"># The minimum allowed value for a color space. Data will be clipped to be</span>
+    <span class="c1"># no less than the value of ``min_value``.</span>
+    <span class="n">min_value</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">])</span>
 
-    <span class="nd">@axis</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
-        <span class="n">raise_not_implemented</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;setting axis&#39;</span><span class="p">)</span>
+    <span class="c1"># The maximum allowed value for a color space. Data will be clipped to be</span>
+    <span class="c1"># no more than the value of ``max_value``.</span>
+    <span class="n">scale_factor</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">])</span>
 
-    <span class="nd">@property</span>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+    <span class="n">__spacename__</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
 
-    <span class="nd">@illuminant</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ill</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">):</span>
-        <span class="n">raise_not_implemented</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;setting illuminant&#39;</span><span class="p">)</span>
+<div class="viewcode-block" id="ColorSpaceData.get_data"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The stored color data</span>
 
-    <span class="nd">@property</span>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">observer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+<span class="sd">        Indexing into the space data instance is equivalent to indexing into </span>
+<span class="sd">        the data itself::</span>
 
-    <span class="nd">@observer</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
-        <span class="n">raise_not_implemented</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;setting observer&#39;</span><span class="p">)</span>
+<span class="sd">            space.data[inds]</span>
 
-    <span class="nd">@property</span>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
+<span class="sd">        is the same as::</span>
 
-    <span class="nd">@rgbs</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
-        <span class="n">raise_not_implemented</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;setting rgbs&#39;</span><span class="p">)</span>
+<span class="sd">            space[inds]&quot;&quot;&quot;</span>
+        <span class="n">b_shape</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="k">else</span> <span class="mi">1</span>
+                   <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span><span class="o">.</span><span class="n">ndim</span><span class="p">)]</span>
+        <span class="n">min_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">min_value</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">b_shape</span><span class="p">)</span>
+        <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_value</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">b_shape</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span><span class="p">,</span> <span class="n">min_value</span><span class="p">,</span> <span class="n">max_value</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span> <span class="o">*</span> <span class="n">d</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_scaled</span> <span class="k">else</span> <span class="n">d</span></div>
 
-    <span class="nd">@property</span>
-    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">caa</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">pass</span>
-
-    <span class="nd">@caa</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
-        <span class="n">raise_not_implemented</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;setting caa&#39;</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_data</span><span class="p">)</span>
 
     <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">]):</span>
+<div class="viewcode-block" id="ColorSpaceData.get_raw_data"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_raw_data">[docs]</a>    <span class="k">def</span> <span class="nf">get_raw_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The raw unscaled, un-clipped data. All conversions are done on this</span>
+<span class="sd">        value.</span>
+<span class="sd">        </span>
+<span class="sd">        :return: the raw data </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">pass</span></div>
+
+    <span class="n">raw_data</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_raw_data</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="ColorSpaceData.get_axis"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_axis">[docs]</a>    <span class="k">def</span> <span class="nf">get_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The axis in the data array that the color components lie along.</span>
+<span class="sd">        </span>
+<span class="sd">        Changing the axis will permute the dimensions of the underlying</span>
+<span class="sd">        array, so that the color space components lie along the new axis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_axis</span><span class="p">,</span> <span class="n">set_axis</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="ColorSpaceData.get_illuminant"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_illuminant">[docs]</a>    <span class="k">def</span> <span class="nf">get_illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Illuminant</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The illuminant. This combined with the </span>
+<span class="sd">        :py:attr:`~ColorSpaceData.observer` </span>
+<span class="sd">        determines the reference white point of the space.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ill</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">illuminant</span><span class="p">:</span> <span class="n">Illuminant</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_illuminant</span><span class="p">,</span> <span class="n">set_illuminant</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="ColorSpaceData.get_observer"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_observer">[docs]</a>    <span class="k">def</span> <span class="nf">get_observer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Observer</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The observer. This combined with the </span>
+<span class="sd">        :py:attr:`~ColorSpaceData.illuminant` </span>
+<span class="sd">        determines the reference white point of the space.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_observer</span><span class="p">,</span> <span class="n">set_observer</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="ColorSpaceData.get_rgbs"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_rgbs">[docs]</a>    <span class="k">def</span> <span class="nf">get_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RgbSpecification</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The RGB color space specification.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">rgbs</span><span class="p">:</span> <span class="n">RgbSpecification</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_rgbs</span><span class="p">,</span> <span class="n">set_rgbs</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="ColorSpaceData.get_caa"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_caa">[docs]</a>    <span class="k">def</span> <span class="nf">get_caa</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The chromatic adaptation algorithm.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">caa</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_caa</span><span class="p">,</span> <span class="n">set_caa</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="ColorSpaceData.get_is_scaled"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_is_scaled">[docs]</a>    <span class="k">def</span> <span class="nf">get_is_scaled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Whether the data is scaled</span>
+<span class="sd">        </span>
+<span class="sd">        If set to ``True``, then the data is scaled by the scale factor of the</span>
+<span class="sd">        space.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">set_is_scaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tf</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="k">pass</span>
+
+    <span class="n">is_scaled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_is_scaled</span><span class="p">,</span> <span class="n">set_is_scaled</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ColorSpaceData.get_components"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_components">[docs]</a>    <span class="k">def</span> <span class="nf">get_components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Tuple containing the correct slices of the data to get the </span>
+<span class="sd">        individual color space components. For example, in :class:`LabData`, </span>
+<span class="sd">        this property would contain ``(L*, a*, b*)``.</span>
+
+<span class="sd">            &gt;&gt;&gt; lab = LabData([[50., 25., 25.], [75., 0., 60.]])</span>
+<span class="sd">            &gt;&gt;&gt; lab.components[0]</span>
+<span class="sd">            array([[ 50.],</span>
+<span class="sd">                   [ 75.]])</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">component_inds</span> <span class="o">=</span> <span class="n">construct_component_inds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">,</span>
+                                                  <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span>
+                                                  <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span><span class="p">,</span>
+                                                  <span class="n">min_ndims</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">component_inds</span><span class="p">)</span></div>
+
+    <span class="n">components</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_components</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ColorSpaceData.get_num_components"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_num_components">[docs]</a>    <span class="k">def</span> <span class="nf">get_num_components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The number of components in the color space. For example </span>
+<span class="sd">           :class:`LabData` has three components: L*, a*, b*. </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="mi">3</span></div>
+
+    <span class="n">num_components</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">lazy_property</span><span class="p">(</span><span class="n">get_num_components</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="ColorSpaceData.to"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.to">[docs]</a>    <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s1">&#39;ColorSpaceData&#39;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert this space to another space.::</span>
+<span class="sd">        </span>
+<span class="sd">            &gt;&gt;&gt; lab = LabData([50., 25., 25.])</span>
+<span class="sd">            &gt;&gt;&gt; xyz = lab.to(XyzData)</span>
+<span class="sd">        </span>
+<span class="sd">        :param space: either the name or the class of the destination color </span>
+<span class="sd">           space. </span>
+<span class="sd">        :return: The new color space data</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="ColorSpaceData.get_kwargs"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceData.get_kwargs">[docs]</a>    <span class="k">def</span> <span class="nf">get_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        The keyword arguments used to construct the object</span>
+<span class="sd">        :return: </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">,</span>
+                <span class="s1">&#39;illuminant&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">illuminant</span><span class="p">,</span>
+                <span class="s1">&#39;observer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">,</span>
+                <span class="s1">&#39;rgbs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rgbs</span><span class="p">,</span>
+                <span class="s1">&#39;caa&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">caa</span><span class="p">,</span>
+                <span class="s1">&#39;is_scaled&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_scaled</span><span class="p">}</span></div>
+
+    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">get_kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__array__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">kwarg_repr</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{key!s}</span><span class="s1">=</span><span class="si">{value!r}</span><span class="s1">&#39;</span>
+                               <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;{type(self).__name__}(</span><span class="si">{self.data!r}</span><span class="s1">, </span><span class="si">{kwarg_repr}</span><span class="s1">)&#39;</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">axis</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">illuminant</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">illuminant</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">observer</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">rgbs</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">rgbs</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">caa</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">caa</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_scaled</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">is_scaled</span><span class="p">)</span></div>
+
+
+<span class="c1"># A type variable for color space types.</span>
+<span class="n">ColorSpace</span> <span class="o">=</span> <span class="n">Type</span><span class="p">[</span><span class="n">ColorSpaceData</span><span class="p">]</span>
+
+<span class="c1"># Stores all named color spaces</span>
+<span class="n">_space_name_to_type_map</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ColorSpace</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+
+<span class="k">def</span> <span class="nf">get_space</span><span class="p">(</span><span class="n">space</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ColorSpace</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ColorSpace</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the space name and class associated with it</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">space_name</span> <span class="o">=</span> <span class="n">space</span>
+        <span class="n">space_class</span> <span class="o">=</span> <span class="n">get_space_class</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+            <span class="n">space</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
+        <span class="n">space_class</span> <span class="o">=</span> <span class="n">space</span>
+        <span class="n">space_name</span> <span class="o">=</span> <span class="n">get_space_name</span><span class="p">(</span><span class="n">space_class</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">space_name</span><span class="p">,</span> <span class="n">space_class</span>
+
+
+<span class="k">def</span> <span class="nf">get_space_class</span><span class="p">(</span><span class="n">space_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColorSpace</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the color space class associated with a color space</span>
+
+<span class="sd">    :param space_name: The name of the space</span>
+
+<span class="sd">    &gt;&gt;&gt; get_space_class(&#39;CIEXYZ&#39;)</span>
+<span class="sd">    XyzData</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">space_name</span> <span class="ow">in</span> <span class="n">_space_name_to_type_map</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">space_name</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space_name</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;get_space_class expected a str object, but got a &#39;</span>
+                        <span class="n">f</span><span class="s1">&#39;{type(space_name).__name__} instead.&#39;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">get_space_name</span><span class="p">(</span><span class="n">space_class</span><span class="p">:</span> <span class="n">ColorSpace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Get the color space name associated with a color space&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">space_class</span><span class="p">,</span> <span class="nb">type</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">space_class</span><span class="p">,</span> <span class="s1">&#39;__spacename__&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">space_class</span><span class="o">.</span><span class="n">__spacename__</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">UndefinedColorSpaceError</span><span class="p">(</span><span class="n">space_class</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;get_space_name expected a type object, but got a &#39;</span>
+                        <span class="n">f</span><span class="s1">&#39;{type(space_class).__name__} instead.&#39;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="color_space"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.color_space">[docs]</a><span class="k">def</span> <span class="nf">color_space</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">ColorSpace</span><span class="p">],</span> <span class="n">ColorSpace</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decorator that registers a class as a color space.</span>
+
+<span class="sd">    :return: decorator that returns the class after registering it</span>
+
+<span class="sd">    The ``color_space`` decorator registers a class as a color space for color </span>
+<span class="sd">    conversions.::</span>
+
+<span class="sd">       @color_space(&#39;test1&#39;)</span>
+<span class="sd">       class TestSpaceData(ColorSpaceDataImpl):</span>
+<span class="sd">           pass</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">decorator</span><span class="p">(</span><span class="bp">cls</span><span class="p">:</span> <span class="n">ColorSpace</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColorSpace</span><span class="p">:</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">__spacename__</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="n">_space_name_to_type_map</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">cls</span>
+        <span class="k">return</span> <span class="bp">cls</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+<span class="c1"># A type variable for things that can be turned into arrays.</span>
+<span class="n">ArrayLike</span> <span class="o">=</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="s1">&#39;ArrayLike&#39;</span><span class="p">],</span> <span class="nb">float</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="ColorSpaceDataImpl"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceDataImpl">[docs]</a><span class="k">class</span> <span class="nc">ColorSpaceDataImpl</span><span class="p">(</span><span class="n">ColorSpaceData</span><span class="p">,</span> <span class="n">SetGet</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    A full implementation of the :class:`ColorSpaceDataBase` interface. All </span>
-<span class="sd">    color space data classes should extend this.</span>
+<span class="sd">    A full implementation of the :class:`ColorSpaceDataBase` interface, with </span>
+<span class="sd">    internal storage for the data.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
-                 <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ColorSpaceData</span><span class="p">],</span>
+                 <span class="n">data</span><span class="p">:</span> <span class="n">ArrayLike</span><span class="p">,</span>
+                 <span class="o">*</span><span class="p">,</span>
                  <span class="n">axis</span><span class="p">:</span> <span class="nb">int</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                  <span class="n">illuminant</span><span class="p">:</span> <span class="n">Illuminant</span><span class="o">=</span><span class="n">get_default_illuminant</span><span class="p">(),</span>
                  <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span><span class="o">=</span><span class="n">get_default_observer</span><span class="p">(),</span>
                  <span class="n">rgbs</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="o">=</span><span class="n">get_default_rgb_specification</span><span class="p">(),</span>
                  <span class="n">caa</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="o">=</span>
-                 <span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">()):</span>
+                 <span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">(),</span>
+                 <span class="n">is_scaled</span><span class="p">:</span> <span class="nb">bool</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        </span>
 <span class="sd">        :param data: the color space data to contain</span>
@@ -157,16 +402,12 @@
 <span class="sd">        :param observer: the observer</span>
 <span class="sd">        :param rgbs: the rgb specification</span>
 <span class="sd">        :param caa: the chromatic adaptation algorithm</span>
+<span class="sd">        :param is_scaled: Whether or not the data is scaled</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ColorSpaceData</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">axis</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">illuminant</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">observer</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">rgbs</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">caa</span>
-            <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">data</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_scaled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_factor</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">flags</span><span class="o">.</span><span class="n">writeable</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span> <span class="o">=</span> <span class="p">(</span><span class="n">axis</span>
                       <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
@@ -183,113 +424,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="p">(</span><span class="n">caa</span>
                      <span class="k">if</span> <span class="n">caa</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
                      <span class="k">else</span> <span class="n">get_default_chromatic_adaptation_algorithm</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_scaled</span> <span class="o">=</span> <span class="n">is_scaled</span>
 
-    <span class="k">def</span> <span class="nf">__array__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">dtype</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">dtype</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="n">kwarg_repr</span> <span class="o">=</span> <span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">f</span><span class="s1">&#39;</span><span class="si">{key!s}</span><span class="s1">=</span><span class="si">{value!r}</span><span class="s1">&#39;</span>
-                               <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_kwargs</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
-        <span class="k">return</span> <span class="n">f</span><span class="s1">&#39;{type(self).__name__}(</span><span class="si">{self.data!r}</span><span class="s1">, </span><span class="si">{kwarg_repr}</span><span class="s1">)&#39;</span>
-
-    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="k">return</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">type</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">axis</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">illuminant</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">illuminant</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">observer</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">rgbs</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">rgbs</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">caa</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">caa</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Tuple containing the correct slices of the data to get the </span>
-<span class="sd">        individual color space components. For example, in :class:`LabData`, </span>
-<span class="sd">        this property would contain ``(L*, a*, b*)``.</span>
-<span class="sd">        </span>
-<span class="sd">        &gt;&gt;&gt; lab = LabData([[50., 25., 25.], [75., 0., 60.]])</span>
-<span class="sd">        &gt;&gt;&gt; lab.components[0]</span>
-<span class="sd">        array([[ 50.],</span>
-<span class="sd">               [ 75.]])</span>
-<span class="sd">        </span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">component_inds</span> <span class="o">=</span> <span class="n">construct_component_inds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">,</span>
-                                                  <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">ndim</span><span class="p">,</span>
-                                                  <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span><span class="p">,</span>
-                                                  <span class="n">min_ndims</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="bp">self</span><span class="p">[</span><span class="n">c</span><span class="p">]</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">component_inds</span><span class="p">)</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">num_components</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: The number of components in the color space. For example </span>
-<span class="sd">           :class:`LabData` has three components: L*, a*, b*. </span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="mi">3</span>
-
-<div class="viewcode-block" id="ColorSpaceDataImpl.to"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ColorSpaceDataImpl.to">[docs]</a>    <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">],</span>
-           <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColorSpaceData</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Convert this space to another space.::</span>
-<span class="sd">        </span>
-<span class="sd">            lab = LabData([50., 25., 25.])</span>
-<span class="sd">            xyz = lab.to(&#39;xyz&#39;)</span>
-<span class="sd">        </span>
-<span class="sd">        :param space: either the name or the class of the destination color </span>
-<span class="sd">           space. </span>
-<span class="sd">        :return: The new color space data</span>
-
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">to_space</span><span class="p">,</span> <span class="n">to_class</span> <span class="o">=</span> <span class="n">get_space</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
-        <span class="n">from_space</span> <span class="o">=</span> <span class="n">get_space_name</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
-        <span class="n">self_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_kwargs</span><span class="p">()</span>
-        <span class="n">converted_data</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
-                                 <span class="n">from_space</span><span class="o">=</span><span class="n">from_space</span><span class="p">,</span>
-                                 <span class="n">to_space</span><span class="o">=</span><span class="n">to_space</span><span class="p">,</span>
-                                 <span class="o">**</span><span class="n">self_kwargs</span><span class="p">)</span>
-        <span class="n">new_data</span> <span class="o">=</span> <span class="n">to_class</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">converted_data</span><span class="p">,</span>
-                            <span class="o">**</span><span class="n">self_kwargs</span><span class="p">)</span>
-        <span class="n">new_data</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">new_data</span></div>
-
-    <span class="k">def</span> <span class="nf">_get_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;axis&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">,</span>
-                <span class="s1">&#39;illuminant&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">illuminant</span><span class="p">,</span>
-                <span class="s1">&#39;observer&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">observer</span><span class="p">,</span>
-                <span class="s1">&#39;rgbs&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">rgbs</span><span class="p">,</span>
-                <span class="s1">&#39;caa&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">caa</span><span class="p">}</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The stored color data</span>
-<span class="sd">        </span>
-<span class="sd">        Indexing into the space data instance is equivalent to indexing into the</span>
-<span class="sd">        data itself::</span>
-<span class="sd">        </span>
-<span class="sd">            space.data[inds]</span>
-<span class="sd">            </span>
-<span class="sd">        is the same as::</span>
-<span class="sd">        </span>
-<span class="sd">            space[inds]&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">get_raw_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">axis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The axis in the data array that the color components lie along.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">get_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span>
 
-    <span class="nd">@axis</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_axis</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">axis</span> <span class="o">=</span> <span class="n">get_matching_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
-                                          <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span> <span class="o">=</span> <span class="n">get_matching_axis</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                                           <span class="bp">self</span><span class="o">.</span><span class="n">num_components</span><span class="p">)</span>
         <span class="k">elif</span> <span class="n">a</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span><span class="p">:</span>
             <span class="n">new_dims</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">ndim</span><span class="p">))</span>
             <span class="n">new_dims</span><span class="p">[</span><span class="n">a</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">axis</span>
@@ -297,82 +443,87 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">transpose</span><span class="p">(</span><span class="n">new_dims</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_axis</span> <span class="o">=</span> <span class="n">a</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Illuminant</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The illuminant. This combined with the </span>
-<span class="sd">        :py:attr:`~ColorSpaceDataImpl.observer` </span>
-<span class="sd">        determines the reference white point of the space.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">get_illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Illuminant</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span>
 
-    <span class="nd">@illuminant</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ill</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ill</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span> <span class="o">=</span> <span class="n">ill</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">observer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Observer</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The observer. This combined with the </span>
-<span class="sd">        :py:attr:`~ColorSpaceDataImpl.illuminant` </span>
-<span class="sd">        determines the reference white point of the space.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">get_observer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Observer</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span>
 
-    <span class="nd">@observer</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span> <span class="o">=</span> <span class="n">obs</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RgbSpecification</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The RGB color space specification&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">get_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RgbSpecification</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span>
 
-    <span class="nd">@rgbs</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span> <span class="o">=</span> <span class="n">r</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">caa</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;The chromatic adaptation algorithm.&quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">get_caa</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span>
 
-    <span class="nd">@caa</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">c</span></div>
+    <span class="k">def</span> <span class="nf">set_caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">c</span>
+
+    <span class="k">def</span> <span class="nf">get_is_scaled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_scaled</span>
+
+    <span class="k">def</span> <span class="nf">set_is_scaled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">is_scaled</span><span class="p">:</span> <span class="nb">bool</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_is_scaled</span> <span class="o">=</span> <span class="n">is_scaled</span>
+
+    <span class="k">def</span> <span class="nf">to</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">space</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">type</span><span class="p">],</span>
+           <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ColorSpaceData</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">convert</span>
+        <span class="n">to_space</span><span class="p">,</span> <span class="n">to_class</span> <span class="o">=</span> <span class="n">get_space</span><span class="p">(</span><span class="n">space</span><span class="p">)</span>
+        <span class="n">from_space</span> <span class="o">=</span> <span class="n">get_space_name</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+        <span class="n">self_kwargs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwargs</span>
+        <span class="n">self_is_scaled</span> <span class="o">=</span> <span class="n">self_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;is_scaled&#39;</span><span class="p">)</span>
+        <span class="n">converted_data</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw_data</span><span class="p">,</span>
+                                 <span class="n">from_space</span><span class="o">=</span><span class="n">from_space</span><span class="p">,</span>
+                                 <span class="n">to_space</span><span class="o">=</span><span class="n">to_space</span><span class="p">,</span>
+                                 <span class="o">**</span><span class="n">self_kwargs</span><span class="p">)</span>
+        <span class="n">new_data</span> <span class="o">=</span> <span class="n">to_class</span><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">converted_data</span><span class="p">,</span>
+                            <span class="o">**</span><span class="n">self_kwargs</span><span class="p">)</span>
+        <span class="n">new_data</span><span class="o">.</span><span class="n">is_scaled</span> <span class="o">=</span> <span class="n">self_is_scaled</span>
+        <span class="n">new_data</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">new_data</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;Spectrum&#39;</span><span class="p">)</span>
-<div class="viewcode-block" id="SpectralData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.SpectralData">[docs]</a><span class="k">class</span> <span class="nc">SpectralData</span><span class="p">(</span><span class="n">ColorSpaceDataImpl</span><span class="p">):</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">REFLECTANCE_SPECTRUM</span><span class="p">)</span>
+<div class="viewcode-block" id="ReflectanceSpectrumData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ReflectanceSpectrumData">[docs]</a><span class="k">class</span> <span class="nc">ReflectanceSpectrumData</span><span class="p">(</span><span class="n">ColorSpaceDataImpl</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Contains raw reflectance spectral data</span>
 <span class="sd">    </span>
-<span class="sd">    In addition to the usual data arguments, this data also needs the </span>
-<span class="sd">    wavelengths of the spectra. </span>
-<span class="sd">    </span>
-<span class="sd">    :param data: The spectral data [reflectance].</span>
-<span class="sd">    :param wavelengths: The wavelengths that correspond to the spectra.</span>
-<span class="sd">    :param axis: The axis along which the spectra lie.</span>
-<span class="sd">    :param illuminant: The illuminant</span>
-<span class="sd">    :type illuminant: Illuminant</span>
-<span class="sd">    :param observer: The observer</span>
-<span class="sd">    :type observer: Observer</span>
-<span class="sd">    :param rgbs: The RGB specification</span>
-<span class="sd">    :type rgbs: RgbSpecification</span>
-<span class="sd">    :param caa: The chromatic adaptation algorithm.</span>
-<span class="sd">    :type caa: ChromaticAdaptationAlgorithm</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">ColorSpaceData</span><span class="p">],</span>
-                 <span class="n">wavelengths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">scale_factor</span> <span class="o">=</span> <span class="mi">100</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                 <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">ColorSpaceData</span><span class="p">],</span>
+                 <span class="n">wavelengths</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span>
+                 <span class="o">*</span><span class="p">,</span>
                  <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
-                 <span class="o">*</span><span class="n">args</span><span class="p">,</span>
                  <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="k">if</span> <span class="n">wavelengths</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">SpectralData</span><span class="p">)</span> <span class="ow">and</span> <span class="n">data</span><span class="o">.</span><span class="n">wavelengths</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">wavelengths</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;SpectralData expected wavelength data, but it &#39;</span>
-                                <span class="s1">&#39;was not specified.&#39;</span><span class="p">)</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        </span>
+<span class="sd">        In addition to the usual data arguments, this data also needs the </span>
+<span class="sd">        wavelengths of the spectra. </span>
+<span class="sd">        </span>
+<span class="sd">        :param data: The spectral data [reflectance].</span>
+<span class="sd">        :param wavelengths: The wavelengths that correspond to the spectra.</span>
+<span class="sd">        :param axis: The axis along which the spectra lie.</span>
+<span class="sd">        :param illuminant: The illuminant</span>
+<span class="sd">        :type illuminant: Illuminant</span>
+<span class="sd">        :param observer: The observer</span>
+<span class="sd">        :type observer: Observer</span>
+<span class="sd">        :param rgbs: The RGB specification</span>
+<span class="sd">        :type rgbs: RgbSpecification</span>
+<span class="sd">        :param caa: The chromatic adaptation algorithm.</span>
+<span class="sd">        :type caa: ChromaticAdaptationAlgorithm </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
             <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-            <span class="n">wavelengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">ColorSpaceData</span><span class="p">):</span>
                 <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">axis</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
@@ -381,21 +532,22 @@
                     <span class="n">axis</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">axis</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">axis</span> <span class="o">=</span> <span class="n">get_matching_axis</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">))</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="c1"># noinspection PyArgumentList</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_wavelengths</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">wavelengths</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">num_components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ReflectanceSpectrumData.get_num_components"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ReflectanceSpectrumData.get_num_components">[docs]</a>    <span class="k">def</span> <span class="nf">get_num_components</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;The number of wavelengths in the data&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span><span class="o">.</span><span class="n">size</span></div>
 
-    <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">wavelengths</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<div class="viewcode-block" id="ReflectanceSpectrumData.get_wavelengths"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.ReflectanceSpectrumData.get_wavelengths">[docs]</a>    <span class="k">def</span> <span class="nf">get_wavelengths</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;The wavelengths that correspond to the data&quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wavelengths</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wavelengths</span></div>
 
-    <span class="k">def</span> <span class="nf">_get_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">_get_kwargs</span><span class="p">()</span>
+    <span class="n">wavelengths</span> <span class="o">=</span> <span class="nb">property</span><span class="p">(</span><span class="n">get_wavelengths</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">kwargs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_kwargs</span><span class="p">()</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s1">&#39;wavelengths&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelengths</span>
         <span class="k">return</span> <span class="n">kwargs</span></div>
 
@@ -413,12 +565,10 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
-    <span class="nd">@ColorSpaceDataImpl</span><span class="o">.</span><span class="n">illuminant</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ill</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_illuminant</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ill</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_white_point</span><span class="p">(</span><span class="n">ill</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_observer</span><span class="p">)</span>
 
-    <span class="nd">@ColorSpaceDataImpl</span><span class="o">.</span><span class="n">observer</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_observer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_white_point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span><span class="p">,</span> <span class="n">obs</span><span class="p">)</span>
 
 <div class="viewcode-block" id="WhitePointSensitive.change_white_point"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.WhitePointSensitive.change_white_point">[docs]</a>    <span class="k">def</span> <span class="nf">change_white_point</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">illuminant</span><span class="p">:</span> <span class="n">Illuminant</span><span class="p">,</span> <span class="n">observer</span><span class="p">:</span> <span class="n">Observer</span><span class="p">):</span>
@@ -430,7 +580,7 @@
 <span class="sd">        :param observer: The new observer</span>
 <span class="sd">        :return: self</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">xyz2xyz</span>
+        <span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">xyz2xyz</span><span class="p">,</span> <span class="n">convert</span>
 
         <span class="n">source_white_point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_illuminant</span><span class="o">.</span><span class="n">get_white_point</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_observer</span><span class="p">)</span>
         <span class="n">destination_white_point</span> <span class="o">=</span> <span class="n">illuminant</span><span class="o">.</span><span class="n">get_white_point</span><span class="p">(</span><span class="n">observer</span><span class="p">)</span>
@@ -463,7 +613,7 @@
         <span class="k">return</span> <span class="bp">self</span></div></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;XYZ&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">XYZ</span><span class="p">)</span>
 <div class="viewcode-block" id="XyzData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.XyzData">[docs]</a><span class="k">class</span> <span class="nc">XyzData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents data from the CIE XYZ color space. </span>
@@ -485,10 +635,10 @@
 <span class="sd">        results were combined into the specification of the CIE RGB color </span>
 <span class="sd">        space, from which the CIE XYZ color space was derived.* </span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
+    <span class="n">scale_factor</span> <span class="o">=</span> <span class="mi">100</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;xyY&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">XYY</span><span class="p">)</span>
 <div class="viewcode-block" id="XyyData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.XyyData">[docs]</a><span class="k">class</span> <span class="nc">XyyData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents data from the CIE xyY color space</span>
@@ -514,7 +664,7 @@
     <span class="k">pass</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;XYZ_r&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">NORMALIZED_XYZ</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">NormalizedXyzData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    This space is the CIE XYZ space, normalized by the white point</span>
@@ -522,7 +672,7 @@
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;CIELAB&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">LAB</span><span class="p">)</span>
 <div class="viewcode-block" id="LabData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.LabData">[docs]</a><span class="k">class</span> <span class="nc">LabData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents the CIE L*a*b* color space.</span>
@@ -531,7 +681,7 @@
 <span class="sd">    </span>
 <span class="sd">        *CIE L\*a\*b\* (CIELAB) is a color space specified by the International </span>
 <span class="sd">        Commission on Illumination (French Commission internationale de </span>
-<span class="sd">        l&#39;éclairage, hence its CIE initialism). It describes all the colors </span>
+<span class="sd">        l&#39;éclairage, hence its CIE initials). It describes all the colors </span>
 <span class="sd">        visible to the human eye and was created to serve as a </span>
 <span class="sd">        device-independent model to be used as a reference.* </span>
 
@@ -545,10 +695,11 @@
 <span class="sd">        full name, since they represent L\*, a\* and b\*, to distinguish them </span>
 <span class="sd">        from Hunter&#39;s L, a, and b.*</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">pass</span></div>
+    <span class="n">min_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">])</span>
+    <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">100.</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">])</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;CIELCH&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">LCH</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">LchData</span><span class="p">(</span><span class="n">WhitePointSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents the CIELCh color space.</span>
@@ -562,7 +713,8 @@
 <span class="sd">        CIELab color wheel) are specified. The CIELab lightness L* remains </span>
 <span class="sd">        unchanged. </span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">pass</span>
+    <span class="n">min_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">])</span>
+    <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">100.</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="mf">360.</span><span class="p">])</span>
 
 
 <span class="c1"># noinspection PyMethodOverriding</span>
@@ -574,15 +726,19 @@
 <span class="sd">     </span>
 <span class="sd">    Any Color space representing RGB data should extend this class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="nd">@WhitePointSensitive</span><span class="o">.</span><span class="n">rgbs</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
+    <span class="n">scale_factor</span> <span class="o">=</span> <span class="mf">255.</span>
+    <span class="n">min_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">])</span>
+    <span class="n">max_value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">set_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_rgbs</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span><span class="p">)</span>
 
-    <span class="nd">@WhitePointSensitive</span><span class="o">.</span><span class="n">caa</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">change_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rgbs</span><span class="p">,</span> <span class="n">caa</span><span class="p">):</span>
+        <span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">convert</span>
+
         <span class="n">xyz</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span>
                       <span class="n">from_space</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__spacename__</span><span class="p">,</span>
                       <span class="n">to_space</span><span class="o">=</span><span class="s1">&#39;xyz&#39;</span><span class="p">,</span>
@@ -603,7 +759,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">caa</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;lRGB&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">LINEAR_RGB</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">LinearRgbData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Represents data that is uncompanded RGB</span>
@@ -611,23 +767,28 @@
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;RGB&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">RGB</span><span class="p">)</span>
 <div class="viewcode-block" id="RgbData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.RgbData">[docs]</a><span class="k">class</span> <span class="nc">RgbData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span></div>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;HSL&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HSL</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">HslData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;HSI&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HSI</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">HsiData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span>
 
 
-<span class="nd">@color_space</span><span class="p">(</span><span class="s1">&#39;HCY&#39;</span><span class="p">)</span>
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HCY</span><span class="p">)</span>
 <span class="k">class</span> <span class="nc">HcyData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
+    <span class="k">pass</span>
+
+
+<span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HSV</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">HsvData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
     <span class="k">pass</span>
 </pre></div>
 
