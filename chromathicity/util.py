@@ -1,4 +1,4 @@
-from typing import Any, Iterable, Tuple
+from typing import Any, Iterable, Tuple, TypeVar, Generic, Callable, Union
 
 import numpy as np
 
@@ -72,18 +72,24 @@ def get_matching_axis(shape: Tuple, length: int) -> int:
                          '{} =/= {}.'.format(shape, length))
     return axis_candidates[-1]
 
+A = TypeVar('A')
+T = TypeVar('T')
+GetMethod = Callable[..., A]
+SetMethod = Callable[[T, A], None]
+DelMethod = Callable[[T], None]
+
 
 # noinspection PyPep8Naming
-class lazy_property:
+class lazy_property(Generic[A]):
     """
     A property-like descriptor that does not bind to a function, but to the name 
     of the function. That way subclasses can easily override the getter/setter/
     delete
     """
     def __init__(self,
-                 getter_method=None,
-                 setter_method=None,
-                 deleter_method=None,
+                 getter_method: GetMethod=None,
+                 setter_method: SetMethod=None,
+                 deleter_method: DelMethod=None,
                  doc=None):
         self.getter_method = getter_method
         self.setter_method = setter_method
@@ -95,7 +101,7 @@ class lazy_property:
                 doc = setter_method.__doc__
         self.__doc__ = doc
 
-    def __get__(self, obj, cls=None):
+    def __get__(self, obj, cls=None) -> Union['lazy_property', A]:
         if obj is None:
             return self
         if self.getter_method is None:
@@ -107,7 +113,7 @@ class lazy_property:
                             f'a {self.getter_method.__name__} method')
         return fget()
 
-    def __set__(self, obj, value):
+    def __set__(self, obj, value: A):
         if self.setter_method is None:
             raise AttributeError("can't set attribute")
         try:
