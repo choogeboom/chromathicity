@@ -11,6 +11,7 @@ from typing import Union, Iterable, Tuple, Any
 
 import numpy as np
 
+import chromathicity.space_names as names
 from chromathicity.chromadapt import (
     get_default_chromatic_adaptation_algorithm,
     ChromaticAdaptationAlgorithm)
@@ -19,10 +20,8 @@ from chromathicity.manage import get_space, get_space_name, color_space
 from chromathicity.observer import get_default_observer, Observer
 from chromathicity.rgbspec import (get_default_rgb_specification,
                                    RgbSpecification)
-import chromathicity.space_names as names
 from chromathicity.util import SetGet, construct_component_inds, \
     get_matching_axis, lazy_property
-
 
 ArrayLike = Union[np.ndarray, Iterable['ArrayLike']]
 
@@ -31,27 +30,59 @@ class ColorSpaceData(ABC):
     """
     Defines the main interface for all color space data classes. 
     :class:`ColorSpaceDataImpl` provides a full implementation of this 
-    interface, so all color space data classes should extend that class instead
-    of this one.
+    interface, which makes it much easier to define custom color spaces.
+    
+    Since this class is designed to be extended, every property calls a 
+    respective getter and setter method, so that overriding is much easier
+    in subclasses.
     """
-    __spacename__ = ''
 
-    @abstractmethod
+    # Controls how scaling works. If :attr:`~ColorSpaceDataImpl.is_scaled` is
+    # ``True``, then the data will be scaled by this value
+    max_value: np.ndarray = [np.inf]
+
+    # The minimum allowed value for a color space. Data will be clipped to be
+    # no less than the value of ``min_value``.
+    min_value: np.ndarray = np.array([-np.inf])
+
+    # The maximum allowed value for a color space. Data will be clipped to be
+    # no more than the value of ``max_value``.
+    scale_factor: np.ndarray = np.array([1.])
+
+    _spacename_: str = ''
+
     def get_data(self) -> np.ndarray:
         """
         The stored color data
 
-        Indexing into the space data instance is equivalent to indexing into the
-        data itself::
+        Indexing into the space data instance is equivalent to indexing into 
+        the data itself::
 
             space.data[inds]
 
         is the same as::
 
             space[inds]"""
-        pass
+        b_shape = [-1 if k == self.axis else 1
+                   for k in range(self.raw_data.ndim)]
+        min_value = np.array(self.min_value).reshape(b_shape)
+        max_value = np.array(self.max_value).reshape(b_shape)
+        d = np.clip(self.raw_data, min_value, max_value)
+        return self.scale_factor * d if self.is_scaled else d
 
     data: np.ndarray = lazy_property(get_data)
+
+    @abstractmethod
+    def get_raw_data(self) -> np.ndarray:
+        """
+        The raw unscaled, un-clipped data. All conversions are done on this
+        value.
+        
+        :return: the raw data 
+        """
+        pass
+
+    raw_data: np.ndarray = lazy_property(get_raw_data)
 
     @abstractmethod
     def get_axis(self) -> int:
@@ -225,25 +256,9 @@ class ColorSpaceData(ABC):
 
 class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     """
-    A full implementation of the :class:`ColorSpaceDataBase` interface. All 
-    color space data classes should extend this.
-    
-    Since this class is designed to be extended, every property calls a 
-    respective getter and setter method, so that overriding is much easier
-    in subclasses.
+    A full implementation of the :class:`ColorSpaceDataBase` interface, with 
+    internal storage for the data.
     """
-
-    # Controls how scaling works. If :attr:`~ColorSpaceDataImpl.is_scaled` is
-    # ``True``, then the data will be scaled by this value
-    scale_factor: np.ndarray = np.array([1.])
-
-    # The minimum allowed value for a color space. Data will be clipped to be
-    # no less than the value of ``min_value``.
-    min_value: np.ndarray = np.array([-np.inf])
-
-    # The maximum allowed value for a color space. Data will be clipped to be
-    # no more than the value of ``max_value``.
-    max_value: np.ndarray = [np.inf]
 
     def __init__(self,
                  data: ArrayLike,
@@ -289,13 +304,8 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
                      else get_default_chromatic_adaptation_algorithm())
         self._is_scaled = is_scaled
 
-    def get_data(self) -> np.ndarray:
-        b_shape = [-1 if k == self.axis else 1
-                   for k in range(self._data.ndim)]
-        min_value = np.array(self.min_value).reshape(b_shape)
-        max_value = np.array(self.max_value).reshape(b_shape)
-        d = np.clip(self._data, min_value, max_value)
-        return self.scale_factor * d if self.is_scaled else d
+    def get_raw_data(self):
+        return self._data
 
     def get_axis(self) -> int:
         return self._axis
@@ -360,7 +370,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
 
 
 @color_space(names.REFLECTANCE_SPECTRUM)
-class SpectralData(ColorSpaceDataImpl):
+class ReflectanceSpectrumData(ColorSpaceDataImpl):
     """
     Contains raw reflectance spectral data
     
@@ -458,7 +468,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
             return self
 
         source_xyz = convert(self._data,
-                             from_space=self.__spacename__,
+                             from_space=self._spacename_,
                              to_space='xyz',
                              illuminant=illuminant,
                              observer=observer,
@@ -471,7 +481,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
                            caa=self._caa)
         self._data = convert(dest_xyz,
                              from_space='xyz',
-                             to_space=self.__spacename__,
+                             to_space=self._spacename_,
                              illuminant=illuminant,
                              observer=observer,
                              rgbs=self._rgbs,
@@ -608,7 +618,7 @@ class RgbsSensitive(WhitePointSensitive):
         from chromathicity.convert import convert
 
         xyz = convert(self._data,
-                      from_space=self.__spacename__,
+                      from_space=self._spacename_,
                       to_space='xyz',
                       axis=self._axis,
                       illuminant=self._illuminant,
@@ -617,7 +627,7 @@ class RgbsSensitive(WhitePointSensitive):
                       caa=self._caa)
         self._data = convert(xyz,
                              from_space='xyz',
-                             to_space=self.__spacename__,
+                             to_space=self._spacename_,
                              axis=self._axis,
                              illuminant=self._illuminant,
                              observer=self._observer,
