@@ -1,13 +1,12 @@
 """
-:mod: chromathicity.spaces -- Color space objects
-===================================
-.. module:: chromathicity.spaces
+Color space objects
+===================
    
 """
 
 
 from abc import ABC, abstractmethod
-from typing import Union, Iterable, Tuple, Any
+from typing import Union, Iterable, Tuple, Any, Type, Dict, Callable
 
 import numpy as np
 
@@ -15,15 +14,13 @@ import chromathicity.space_names as names
 from chromathicity.chromadapt import (
     get_default_chromatic_adaptation_algorithm,
     ChromaticAdaptationAlgorithm)
+from chromathicity.error import UndefinedColorSpaceError
 from chromathicity.illuminant import get_default_illuminant, Illuminant
-from chromathicity.manage import get_space, get_space_name, color_space
 from chromathicity.observer import get_default_observer, Observer
 from chromathicity.rgbspec import (get_default_rgb_specification,
                                    RgbSpecification)
 from chromathicity.util import SetGet, construct_component_inds, \
     get_matching_axis, lazy_property
-
-ArrayLike = Union[np.ndarray, Iterable['ArrayLike']]
 
 
 class ColorSpaceData(ABC):
@@ -49,7 +46,7 @@ class ColorSpaceData(ABC):
     # no more than the value of ``max_value``.
     scale_factor: np.ndarray = np.array([1.])
 
-    _spacename_: str = ''
+    __spacename__: str = ''
 
     def get_data(self) -> np.ndarray:
         """
@@ -254,6 +251,86 @@ class ColorSpaceData(ABC):
                 and self.is_scaled == other.is_scaled)
 
 
+# A type variable for color space types.
+ColorSpace = Type[ColorSpaceData]
+
+# Stores all named color spaces
+_space_name_to_type_map: Dict[str, ColorSpace] = {}
+
+
+def get_space(space: Union[str, ColorSpace]) -> Tuple[str, ColorSpace]:
+    """
+    Get the space name and class associated with it
+    """
+    if isinstance(space, str):
+        space_name = space
+        space_class = get_space_class(space)
+    else:
+        if not isinstance(space, type):
+            space = type(space)
+        space_class = space
+        space_name = get_space_name(space_class)
+    return space_name, space_class
+
+
+def get_space_class(space_name: str) -> ColorSpace:
+    """
+    Get the color space class associated with a color space
+
+    :param space_name: The name of the space
+
+    >>> get_space_class('CIEXYZ')
+    XyzData
+    """
+    if isinstance(space_name, str):
+        if space_name in _space_name_to_type_map:
+            return _space_name_to_type_map[space_name]
+        else:
+            raise UndefinedColorSpaceError(space_name)
+    else:
+        raise TypeError('get_space_class expected a str object, but got a '
+                        f'{type(space_name).__name__} instead.')
+
+
+def get_space_name(space_class: ColorSpace) -> str:
+    """Get the color space name associated with a color space"""
+    if isinstance(space_class, type):
+        if hasattr(space_class, '__spacename__') and space_class.__spacename__:
+            return space_class.__spacename__
+        else:
+            raise UndefinedColorSpaceError(space_class)
+    else:
+        raise TypeError('get_space_name expected a type object, but got a '
+                        f'{type(space_class).__name__} instead.')
+
+
+def color_space(name: str) -> Callable[[ColorSpace], ColorSpace]:
+    """
+    Decorator that registers a class as a color space.
+
+    :return: decorator that returns the class after registering it
+
+    The ``color_space`` decorator registers a class as a color space for color 
+    conversions.::
+
+       @color_space('test1')
+       class TestSpaceData(ColorSpaceDataImpl):
+           pass
+
+    """
+
+    def decorator(cls: ColorSpace) -> ColorSpace:
+        cls.__spacename__ = name
+        _space_name_to_type_map[name] = cls
+        return cls
+
+    return decorator
+
+
+# A type variable for things that can be turned into arrays.
+ArrayLike = Union[np.ndarray, Iterable['ArrayLike'], float]
+
+
 class ColorSpaceDataImpl(ColorSpaceData, SetGet):
     """
     A full implementation of the :class:`ColorSpaceDataBase` interface, with 
@@ -358,7 +435,7 @@ class ColorSpaceDataImpl(ColorSpaceData, SetGet):
         from_space = get_space_name(type(self))
         self_kwargs = self.kwargs
         self_is_scaled = self_kwargs.pop('is_scaled')
-        converted_data = convert(self._data,
+        converted_data = convert(self.raw_data,
                                  from_space=from_space,
                                  to_space=to_space,
                                  **self_kwargs)
@@ -468,7 +545,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
             return self
 
         source_xyz = convert(self._data,
-                             from_space=self._spacename_,
+                             from_space=self.__spacename__,
                              to_space='xyz',
                              illuminant=illuminant,
                              observer=observer,
@@ -481,7 +558,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
                            caa=self._caa)
         self._data = convert(dest_xyz,
                              from_space='xyz',
-                             to_space=self._spacename_,
+                             to_space=self.__spacename__,
                              illuminant=illuminant,
                              observer=observer,
                              rgbs=self._rgbs,
@@ -618,7 +695,7 @@ class RgbsSensitive(WhitePointSensitive):
         from chromathicity.convert import convert
 
         xyz = convert(self._data,
-                      from_space=self._spacename_,
+                      from_space=self.__spacename__,
                       to_space='xyz',
                       axis=self._axis,
                       illuminant=self._illuminant,
@@ -627,7 +704,7 @@ class RgbsSensitive(WhitePointSensitive):
                       caa=self._caa)
         self._data = convert(xyz,
                              from_space='xyz',
-                             to_space=self._spacename_,
+                             to_space=self.__spacename__,
                              axis=self._axis,
                              illuminant=self._illuminant,
                              observer=self._observer,

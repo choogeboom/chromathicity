@@ -1,20 +1,20 @@
 from pytest import raises
 import numpy as np
 
-import chromathicity.manage
 import chromathicity.spaces as sp
+import chromathicity.space_names as names
 from chromathicity.error import UndefinedColorSpaceError
 
 
 def test_get_space():
-    assert chromathicity.manage.get_space('CIEXYZ') == ('CIEXYZ', sp.XyzData)
-    assert chromathicity.manage.get_space(sp.XyzData) == ('CIEXYZ', sp.XyzData)
+    assert sp.get_space(names.XYZ) == (names.XYZ, sp.XyzData)
+    assert sp.get_space(sp.XyzData) == (names.XYZ, sp.XyzData)
     with raises(UndefinedColorSpaceError):
-        chromathicity.manage.get_space('peanut')
+        sp.get_space('peanut')
     with raises(UndefinedColorSpaceError):
-        chromathicity.manage.get_space(2)
+        sp.get_space(2)
     with raises(TypeError):
-        chromathicity.manage.get_space_name(2)
+        sp.get_space_name(2)
 
 
 def test_spectral_data():
