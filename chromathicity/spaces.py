@@ -513,7 +513,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
     This class implements automatic chromatic adaptation whenever the white 
     point of the illuminant/observer combination changes.
     
-    Any subclass representing a space that is sensitive to the white point of 
+    Any class representing a space that is sensitive to the white point of 
     the illuminant/observer combination should inherit from this class.
     """
 
@@ -688,10 +688,19 @@ class RgbsSensitive(WhitePointSensitive):
     def set_rgbs(self, r: RgbSpecification):
         self.change_rgbs(r, self._caa)
 
-    def set_caa(self, c):
+    def set_caa(self, c: ChromaticAdaptationAlgorithm):
         self.change_rgbs(self._rgbs, c)
 
-    def change_rgbs(self, rgbs, caa):
+    def change_rgbs(self,
+                    rgbs: RgbSpecification,
+                    caa: ChromaticAdaptationAlgorithm):
+        """
+        Change the RGB specification for the space. 
+        
+        :param rgbs: The new RGB specification 
+        :param caa: the new chromatic adaptation algorithm
+        :return: 
+        """
         from chromathicity.convert import convert
 
         xyz = convert(self._data,

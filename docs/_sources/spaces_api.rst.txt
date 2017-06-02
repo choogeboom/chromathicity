@@ -16,22 +16,39 @@ Spectral Data
 
 .. autoclass:: chromathicity.spaces.ReflectanceSpectrumData
    :members:
+   :show-inheritance:
 
 
 CIE Spaces
 ----------
 
 .. autoclass:: chromathicity.spaces.XyzData
+   :show-inheritance:
 
 .. autoclass:: chromathicity.spaces.XyyData
+   :show-inheritance:
 
 .. autoclass:: chromathicity.spaces.LabData
+   :show-inheritance:
 
 
 RGB Spaces
 ----------
 
 .. autoclass:: chromathicity.spaces.RgbData
+   :show-inheritance:
+
+.. autoclass:: chromathicity.spaces.HslData
+   :show-inheritance:
+
+.. autoclass:: chromathicity.spaces.HsiData
+   :show-inheritance:
+
+.. autoclass:: chromathicity.spaces.HcyData
+   :show-inheritance:
+
+.. autoclass:: chromathicity.spaces.HsvData
+   :show-inheritance:
 
 
 Defining New Spaces
@@ -48,10 +65,13 @@ classes, which take care of many implementation details.
 
 .. autoclass:: chromathicity.spaces.ColorSpaceDataImpl
    :members:
+   :show-inheritance:
 
 .. autoclass:: chromathicity.spaces.WhitePointSensitive
    :members:
+   :show-inheritance:
 
 .. autoclass:: chromathicity.spaces.RgbsSensitive
    :members:
+   :show-inheritance:
 

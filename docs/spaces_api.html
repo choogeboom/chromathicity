@@ -377,7 +377,8 @@ space.</td>
 <dl class="class">
 <dt id="chromathicity.spaces.ReflectanceSpectrumData">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">ReflectanceSpectrumData</code><span class="sig-paren">(</span><em>data</em>, <em>wavelengths</em>, <em>*</em>, <em>axis=None</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ReflectanceSpectrumData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ReflectanceSpectrumData" title="Permalink to this definition">¶</a></dt>
-<dd><p>Contains raw reflectance spectral data</p>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.ColorSpaceDataImpl" title="chromathicity.spaces.ColorSpaceDataImpl"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.ColorSpaceDataImpl</span></code></a></p>
+<p>Contains raw reflectance spectral data</p>
 <p>In addition to the usual data arguments, this data also needs the 
 wavelengths of the spectra.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -439,7 +440,8 @@ wavelengths of the spectra.</p>
 <dl class="class">
 <dt id="chromathicity.spaces.XyzData">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">XyzData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#XyzData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.XyzData" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents data from the CIE XYZ color space.</p>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.WhitePointSensitive" title="chromathicity.spaces.WhitePointSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.WhitePointSensitive</span></code></a></p>
+<p>Represents data from the CIE XYZ color space.</p>
 <p>From <a class="reference external" href="https://en.wikipedia.org/wiki/CIE_1931_color_space">Wikipedia</a>:</p>
 <blockquote>
 <div><p><em>The CIE 1931 color spaces were the first defined quantitative links 
@@ -461,7 +463,8 @@ space, from which the CIE XYZ color space was derived.</em></p>
 <dl class="class">
 <dt id="chromathicity.spaces.XyyData">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">XyyData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#XyyData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.XyyData" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents data from the CIE xyY color space</p>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.WhitePointSensitive" title="chromathicity.spaces.WhitePointSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.WhitePointSensitive</span></code></a></p>
+<p>Represents data from the CIE xyY color space</p>
 <p>From <a class="reference external" href="https://en.wikipedia.org/wiki/CIE_1931_color_space#CIE_xy_chromaticity_diagram_and_the_CIE_xyY_color_space">Wikipedia</a></p>
 <blockquote>
 <div><p>Since the human eye has three types of color sensors that respond to 
@@ -483,7 +486,8 @@ tristimulus values X, Y, and Z.</p>
 <dl class="class">
 <dt id="chromathicity.spaces.LabData">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">LabData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#LabData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.LabData" title="Permalink to this definition">¶</a></dt>
-<dd><p>Represents the CIE L*a*b* color space.</p>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.WhitePointSensitive" title="chromathicity.spaces.WhitePointSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.WhitePointSensitive</span></code></a></p>
+<p>Represents the CIE L*a*b* color space.</p>
 <p>From <a class="reference external" href="https://en.wikipedia.org/wiki/Lab_color_space#CIELAB">Wikipedia</a>:</p>
 <blockquote>
 <div><p><em>CIE L*a*b* (CIELAB) is a color space specified by the International 
@@ -509,7 +513,32 @@ from Hunter&#8217;s L, a, and b.</em></p>
 <dl class="class">
 <dt id="chromathicity.spaces.RgbData">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">RgbData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#RgbData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.RgbData" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.RgbsSensitive" title="chromathicity.spaces.RgbsSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.RgbsSensitive</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="chromathicity.spaces.HslData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">HslData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#HslData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.HslData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.RgbsSensitive" title="chromathicity.spaces.RgbsSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.RgbsSensitive</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="chromathicity.spaces.HsiData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">HsiData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#HsiData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.HsiData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.RgbsSensitive" title="chromathicity.spaces.RgbsSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.RgbsSensitive</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="chromathicity.spaces.HcyData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">HcyData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#HcyData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.HcyData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.RgbsSensitive" title="chromathicity.spaces.RgbsSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.RgbsSensitive</span></code></a></p>
+</dd></dl>
+
+<dl class="class">
+<dt id="chromathicity.spaces.HsvData">
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">HsvData</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#HsvData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.HsvData" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.RgbsSensitive" title="chromathicity.spaces.RgbsSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.RgbsSensitive</span></code></a></p>
+</dd></dl>
 
 </div>
 <div class="section" id="defining-new-spaces">
@@ -545,7 +574,8 @@ classes, which take care of many implementation details.</p>
 <dl class="class">
 <dt id="chromathicity.spaces.ColorSpaceDataImpl">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">ColorSpaceDataImpl</code><span class="sig-paren">(</span><em>data</em>, <em>*</em>, <em>axis=None</em>, <em>illuminant=D(6504)</em>, <em>observer=Standard(2)</em>, <em>rgbs=Srgb()</em>, <em>caa=Bradford()</em>, <em>is_scaled=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceDataImpl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceDataImpl" title="Permalink to this definition">¶</a></dt>
-<dd><p>A full implementation of the <code class="xref py py-class docutils literal"><span class="pre">ColorSpaceDataBase</span></code> interface, with 
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.ColorSpaceData</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">chromathicity.util.SetGet</span></code></p>
+<p>A full implementation of the <code class="xref py py-class docutils literal"><span class="pre">ColorSpaceDataBase</span></code> interface, with 
 internal storage for the data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -571,9 +601,10 @@ last dimension with the required size.</li>
 <dl class="class">
 <dt id="chromathicity.spaces.WhitePointSensitive">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">WhitePointSensitive</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#WhitePointSensitive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.WhitePointSensitive" title="Permalink to this definition">¶</a></dt>
-<dd><p>This class implements automatic chromatic adaptation whenever the white 
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.ColorSpaceDataImpl" title="chromathicity.spaces.ColorSpaceDataImpl"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.ColorSpaceDataImpl</span></code></a></p>
+<p>This class implements automatic chromatic adaptation whenever the white 
 point of the illuminant/observer combination changes.</p>
-<p>Any subclass representing a space that is sensitive to the white point of 
+<p>Any class representing a space that is sensitive to the white point of 
 the illuminant/observer combination should inherit from this class.</p>
 <dl class="method">
 <dt id="chromathicity.spaces.WhitePointSensitive.change_white_point">
@@ -602,10 +633,32 @@ illuminant and observer</p>
 <dl class="class">
 <dt id="chromathicity.spaces.RgbsSensitive">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">RgbsSensitive</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#RgbsSensitive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.RgbsSensitive" title="Permalink to this definition">¶</a></dt>
-<dd><p>This class represents spaces that are sensitive to the choice of the 
+<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.WhitePointSensitive" title="chromathicity.spaces.WhitePointSensitive"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.WhitePointSensitive</span></code></a></p>
+<p>This class represents spaces that are sensitive to the choice of the 
 <code class="xref py py-class docutils literal"><span class="pre">RgbSpecification</span></code>, and will adapt the color data if the 
 <code class="xref py py-attr docutils literal"><span class="pre">rgbs</span></code> property value changes.</p>
 <p>Any Color space representing RGB data should extend this class.</p>
+<dl class="method">
+<dt id="chromathicity.spaces.RgbsSensitive.change_rgbs">
+<code class="descname">change_rgbs</code><span class="sig-paren">(</span><em>rgbs</em>, <em>caa</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#RgbsSensitive.change_rgbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.RgbsSensitive.change_rgbs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Change the RGB specification for the space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>rgbs</strong> (<code class="xref py py-class docutils literal"><span class="pre">RgbSpecification</span></code>) &#8211; The new RGB specification</li>
+<li><strong>caa</strong> (<code class="xref py py-class docutils literal"><span class="pre">ChromaticAdaptationAlgorithm</span></code>) &#8211; the new chromatic adaptation algorithm</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"></p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </dd></dl>
 
 </div>

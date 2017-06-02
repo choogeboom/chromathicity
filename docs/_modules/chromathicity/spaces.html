@@ -558,7 +558,7 @@
 <span class="sd">    This class implements automatic chromatic adaptation whenever the white </span>
 <span class="sd">    point of the illuminant/observer combination changes.</span>
 <span class="sd">    </span>
-<span class="sd">    Any subclass representing a space that is sensitive to the white point of </span>
+<span class="sd">    Any class representing a space that is sensitive to the white point of </span>
 <span class="sd">    the illuminant/observer combination should inherit from this class.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -733,10 +733,19 @@
     <span class="k">def</span> <span class="nf">set_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">r</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_rgbs</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">set_caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_caa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">c</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">change_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">change_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rgbs</span><span class="p">,</span> <span class="n">caa</span><span class="p">):</span>
+<div class="viewcode-block" id="RgbsSensitive.change_rgbs"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.RgbsSensitive.change_rgbs">[docs]</a>    <span class="k">def</span> <span class="nf">change_rgbs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span>
+                    <span class="n">rgbs</span><span class="p">:</span> <span class="n">RgbSpecification</span><span class="p">,</span>
+                    <span class="n">caa</span><span class="p">:</span> <span class="n">ChromaticAdaptationAlgorithm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Change the RGB specification for the space. </span>
+<span class="sd">        </span>
+<span class="sd">        :param rgbs: The new RGB specification </span>
+<span class="sd">        :param caa: the new chromatic adaptation algorithm</span>
+<span class="sd">        :return: </span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">chromathicity.convert</span> <span class="k">import</span> <span class="n">convert</span>
 
         <span class="n">xyz</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span>
@@ -756,7 +765,7 @@
                              <span class="n">rgbs</span><span class="o">=</span><span class="n">rgbs</span><span class="p">,</span>
                              <span class="n">caa</span><span class="o">=</span><span class="n">caa</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rgbs</span> <span class="o">=</span> <span class="n">rgbs</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">caa</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_caa</span> <span class="o">=</span> <span class="n">caa</span></div></div>
 
 
 <span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">LINEAR_RGB</span><span class="p">)</span>
@@ -773,23 +782,23 @@
 
 
 <span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HSL</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">HslData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
-    <span class="k">pass</span>
+<div class="viewcode-block" id="HslData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.HslData">[docs]</a><span class="k">class</span> <span class="nc">HslData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
+    <span class="k">pass</span></div>
 
 
 <span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HSI</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">HsiData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
-    <span class="k">pass</span>
+<div class="viewcode-block" id="HsiData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.HsiData">[docs]</a><span class="k">class</span> <span class="nc">HsiData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
+    <span class="k">pass</span></div>
 
 
 <span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HCY</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">HcyData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
-    <span class="k">pass</span>
+<div class="viewcode-block" id="HcyData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.HcyData">[docs]</a><span class="k">class</span> <span class="nc">HcyData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
+    <span class="k">pass</span></div>
 
 
 <span class="nd">@color_space</span><span class="p">(</span><span class="n">names</span><span class="o">.</span><span class="n">HSV</span><span class="p">)</span>
-<span class="k">class</span> <span class="nc">HsvData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
-    <span class="k">pass</span>
+<div class="viewcode-block" id="HsvData"><a class="viewcode-back" href="../../spaces_api.html#chromathicity.spaces.HsvData">[docs]</a><span class="k">class</span> <span class="nc">HsvData</span><span class="p">(</span><span class="n">RgbsSensitive</span><span class="p">):</span>
+    <span class="k">pass</span></div>
 </pre></div>
 
           </div>
