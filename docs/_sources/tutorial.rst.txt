@@ -1,12 +1,11 @@
-Tutorial
-********
+Quickstart
+**********
 
-===========
-Basic Usage
-===========
+Color Spaces
+------------
 
 Colorimetric measurements only make sense in the context of a color space, which
-defines the coordinates of the measurement. In ``chromathicity``, color spaces
+defines the coordinates of the measurement. In Chromathicity, color spaces
 are represented by the various subclasses of
 :class:`~chromathicity.spaces.ColorSpaceData`. Almost all of the basic usage
 will be interacting with instances of these color spaces. This tutorial aims to

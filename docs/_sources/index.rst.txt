@@ -3,14 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to Chromathicity's documentation!
-=========================================
+Chromathicity
+=============
+
+Chromathicity is an extensible package for (reflective) color conversions.
+
+Installation is easy::
+
+   pip install chromathicity
+
+Check out `The Chromathicity Git-Hub Page
+<https://github.com/hoogamaphone/chromathicity>`_ for the source code, and
+`PyPI <https://pypi.python.org/pypi/chromathicity>`_ for the package
+information.
+
+Contents
+^^^^^^^^
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
 
-   intro
    tutorial
    spaces_api
 

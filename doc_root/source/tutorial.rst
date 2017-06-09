@@ -1,9 +1,8 @@
-Tutorial
-********
+Quickstart
+**********
 
-===========
-Basic Usage
-===========
+Color Spaces
+------------
 
 Colorimetric measurements only make sense in the context of a color space, which
 defines the coordinates of the measurement. In Chromathicity, color spaces
