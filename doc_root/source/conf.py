@@ -115,7 +115,9 @@ html_theme_options = {
     'github_repo': 'chromathicity',
     'github_button': True,
     'github_type': 'star',
-    'github_banner': True
+    'github_banner': True,
+    'travis_button': True,
+    'fixed_sidebar': True
 }
 
 # Add any paths that contain custom static files (such as style sheets) here,
