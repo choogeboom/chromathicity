@@ -27,7 +27,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Color Spaces" href="spaces_api.html" />
+    <link rel="next" title="Color Spaces API" href="spaces_api.html" />
     <link rel="prev" title="Chromathicity" href="index.html" />
    
   <link rel="stylesheet" href="_static/custom.css" type="text/css" />
@@ -84,9 +84,10 @@
 <li class="toctree-l2"><a class="reference internal" href="#color-spaces">Color Spaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#converting-between-spaces">Converting between spaces</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#data-axis">Data axis</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#illuminants-and-observers">Illuminants and Observers</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="spaces_api.html">Color Spaces</a></li>
+<li class="toctree-l1"><a class="reference internal" href="spaces_api.html">Color Spaces API</a></li>
 </ul>
 
 
@@ -167,6 +168,38 @@ columns of a 3x3 array representing data from a 3-dimensional color space:</p>
 <p>In this case, the axis will be incorrectly determined to be <code class="docutils literal"><span class="pre">1</span></code>, when it
 should have been <code class="docutils literal"><span class="pre">0</span></code>. Be sure to specify the axis to clear up ambiguities:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([[</span><span class="mf">45.</span><span class="p">,</span> <span class="mf">60.</span><span class="p">,</span> <span class="mf">30.</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">35.</span><span class="p">,</span> <span class="mf">60.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mf">25.</span><span class="p">,</span> <span class="o">-</span><span class="mf">20.</span><span class="p">,</span> <span class="o">-</span><span class="mf">55.</span><span class="p">]],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="illuminants-and-observers">
+<h2>Illuminants and Observers<a class="headerlink" href="#illuminants-and-observers" title="Permalink to this headline">¶</a></h2>
+<p>Standard illuminants are theoretical sources of visible light, and are
+important for computing reflective colors. Standard observers define the
+average human&#8217;s chromatic response. Together, illuminants and observers
+define a white point for a color space, which determines how colors in that
+space are perceived.</p>
+<p>Chromathicity provides many standard illuminants and observers, and makes it
+easy to define your own.</p>
+<p>Every color space data object has its own
+<a class="reference internal" href="spaces_api.html#chromathicity.spaces.ColorSpaceData.illuminant" title="chromathicity.spaces.ColorSpaceData.illuminant"><code class="xref py py-attr docutils literal"><span class="pre">illuminant</span></code></a>
+and <a class="reference internal" href="spaces_api.html#chromathicity.spaces.ColorSpaceData.observer" title="chromathicity.spaces.ColorSpaceData.observer"><code class="xref py py-attr docutils literal"><span class="pre">observer</span></code></a>, which determine the
+white point of that space. Changing the white point (by changing either the
+illuminant or observer) changes how the colors in that space are perceived. The
+default illuminant is <code class="xref py py-class docutils literal"><span class="pre">D65</span></code>, and the
+default observer is
+<code class="xref py py-class docutils literal"><span class="pre">the</span> <span class="pre">CIE</span> <span class="pre">1931</span> <span class="pre">Standard</span> <span class="pre">Observer</span></code>.:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([[</span><span class="mf">45.</span><span class="p">,</span> <span class="mf">35.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">],</span> <span class="p">[</span><span class="mf">55.</span><span class="p">,</span> <span class="o">-</span><span class="mf">30.</span><span class="p">,</span> <span class="o">-</span><span class="mf">40.</span><span class="p">]])</span>
+<span class="go">LabData(array([[ 45.,  35.,  25.],</span>
+<span class="go">       [ 55., -30., -40.]]), axis=1, illuminant=D(6504), observer=Standard(2), rgbs=Srgb(), caa=Bradford(), is_scaled=False)</span>
+</pre></div>
+</div>
+<p>If you change the observer, you will notice that the values of the color data
+change appropriately:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">chromathicity.illuminant</span> <span class="k">import</span> <span class="n">A</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span><span class="o">.</span><span class="n">illuminant</span> <span class="o">=</span> <span class="n">A</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">(</span><span class="n">lab</span><span class="p">)</span>
+<span class="go">LabData(array([[ 47.93569658,  47.10703167,  56.58407658],</span>
+<span class="go">    [ 54.81734653, -12.37039196,   9.3364318 ]]), axis=1, illuminant=A(2848.0), observer=Standard(2), rgbs=Srgb(), caa=Bradford(), is_scaled=False)</span>
 </pre></div>
 </div>
 </div>

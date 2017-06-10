@@ -1,5 +1,5 @@
-Color Spaces
-============
+Color Spaces API
+================
 
 Color spaces are defined, for the most part, in the
 ``chromathicity.spaces`` \module.

@@ -67,3 +67,37 @@ should have been ``0``. Be sure to specify the axis to clear up ambiguities::
    >>> lab = LabData([[45., 60., 30.], [-35., 60., 25.], [-25., -20., -55.]], axis=0)
 
 
+Illuminants and Observers
+-------------------------
+
+Standard illuminants are theoretical sources of visible light, and are
+important for computing reflective colors. Standard observers define the
+average human's chromatic response. Together, illuminants and observers
+define a white point for a color space, which determines how colors in that
+space are perceived.
+
+Chromathicity provides many standard illuminants and observers, and makes it
+easy to define your own.
+
+Every color space data object has its own
+:attr:`~chromathicity.spaces.ColorSpaceData.illuminant`
+and :attr:`~chromathicity.spaces.ColorSpaceData.observer`, which determine the
+white point of that space. Changing the white point (by changing either the
+illuminant or observer) changes how the colors in that space are perceived. The
+default illuminant is :class:`D65 <~chromathicity.illuminant.D>`, and the
+default observer is
+:class:`the CIE 1931 Standard Observer <~chromathicity.observer.Standard>`.::
+
+   >>> lab = LabData([[45., 35., 25.], [55., -30., -40.]])
+   LabData(array([[ 45.,  35.,  25.],
+          [ 55., -30., -40.]]), axis=1, illuminant=D(6504), observer=Standard(2), rgbs=Srgb(), caa=Bradford(), is_scaled=False)
+
+If you change the observer, you will notice that the values of the color data
+change appropriately::
+
+   >>> from chromathicity.illuminant import A
+   >>> lab.illuminant = A()
+   >>> print(lab)
+   LabData(array([[ 47.93569658,  47.10703167,  56.58407658],
+       [ 54.81734653, -12.37039196,   9.3364318 ]]), axis=1, illuminant=A(2848.0), observer=Standard(2), rgbs=Srgb(), caa=Bradford(), is_scaled=False)
+
