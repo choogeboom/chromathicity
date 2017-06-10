@@ -546,7 +546,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
 
         source_xyz = convert(self._data,
                              from_space=self.__spacename__,
-                             to_space='xyz',
+                             to_space=names.XYZ,
                              illuminant=illuminant,
                              observer=observer,
                              rgbs=self._rgbs,
@@ -557,7 +557,7 @@ class WhitePointSensitive(ColorSpaceDataImpl):
                            axis=self._axis,
                            caa=self._caa)
         self._data = convert(dest_xyz,
-                             from_space='xyz',
+                             from_space=names.XYZ,
                              to_space=self.__spacename__,
                              illuminant=illuminant,
                              observer=observer,
