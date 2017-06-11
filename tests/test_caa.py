@@ -2,7 +2,8 @@ import numpy as np
 from pytest import raises
 
 from chromathicity import convert
-from chromathicity.chromadapt import ChromaticAdaptationAlgorithm, Bradford
+from chromathicity.chromadapt import Bradford
+from chromathicity.interfaces import ChromaticAdaptationAlgorithm
 from chromathicity.illuminant import D, A
 from chromathicity.observer import Standard
 

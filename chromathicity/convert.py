@@ -3,14 +3,11 @@ from typing import Tuple
 import numpy as np
 import scipy.integrate as integrate
 
-from chromathicity.chromadapt import (
-    ChromaticAdaptationAlgorithm,
-    get_default_chromatic_adaptation_algorithm)
-from chromathicity.illuminant import Illuminant, get_default_illuminant
+from chromathicity.defaults import get_default_illuminant, get_default_observer, \
+    get_default_rgb_specification, get_default_chromatic_adaptation_algorithm
+from chromathicity.interfaces import Illuminant, ChromaticAdaptationAlgorithm, \
+    Observer, RgbSpecification
 from chromathicity.manage import color_conversion, get_conversion_path
-from chromathicity.observer import Observer, get_default_observer
-from chromathicity.rgbspec import (RgbSpecification,
-                                   get_default_rgb_specification)
 import chromathicity.space_names as names
 # Constants used for L*a*b* conversions
 from chromathicity.util import construct_component_inds, get_matching_axis

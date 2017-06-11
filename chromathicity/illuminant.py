@@ -1,66 +1,8 @@
-from abc import ABC, abstractmethod
-
 import numpy as np
-import scipy.integrate as integrate
 from bidict import bidict
 
-from chromathicity.error import raise_not_implemented
+from chromathicity.interfaces import Illuminant
 from chromathicity.math import interp1
-from chromathicity.util import SetGet
-from chromathicity.observer import Observer, Standard, get_default_observer
-
-
-class Illuminant(ABC):
-    """
-    Interface for illuminants
-    
-    A standard illuminant is a theoretical source of visible light with a 
-    publish profile (power spectral distribution). Standard illuminants
-    provide a basis for comparing images or colors recorded under different
-    lighting.
-    """
-
-    @property
-    def name(self) -> str:
-        return self.__name__
-
-    def __str__(self):
-        return self.name
-
-    @property
-    @abstractmethod
-    def wavelengths(self) -> np.ndarray:
-        pass
-
-    @property
-    @abstractmethod
-    def psd(self) -> np.ndarray:
-        pass
-
-    def get_psd(self, wavelengths: np.ndarray) -> np.ndarray:
-        return interp1(wavelengths, self.wavelengths, self.psd)
-
-    def get_white_point(self, observer: Observer=None) -> np.ndarray:
-        """
-        Calculate the white point of the illuminant with a specified observer
-        
-        :param observer: The observer 
-        :return: the white point
-        """
-        if observer is None:
-            observer = get_default_observer()
-        wls = observer.wavelengths
-        p = self.get_psd(wls)
-        x_power = observer.xbar * p
-        is_valid_x = np.logical_not(np.isnan(x_power))
-        x_point = integrate.trapz(x_power[is_valid_x], wls[is_valid_x])
-        y_power = observer.ybar * p
-        is_valid_y = np.logical_not(np.isnan(y_power))
-        y_point = integrate.trapz(y_power[is_valid_y], wls[is_valid_y])
-        z_power = observer.zbar * p
-        is_valid_z = np.logical_not(np.isnan(z_power))
-        z_point = integrate.trapz(z_power[is_valid_z], wls[is_valid_z])
-        return np.array([x_point, y_point, z_point])/y_point
 
 
 class D(Illuminant):
@@ -320,7 +262,3 @@ class CustomIlluminant(Illuminant):
     @Illuminant.psd.getter
     def psd(self):
         return self._psd
-
-
-def get_default_illuminant() -> Illuminant:
-    return D()

@@ -1,99 +1,7 @@
-from abc import ABC, abstractmethod
-
 import numpy as np
 
-from chromathicity.error import raise_not_implemented
-from chromathicity.math import interp1
+from chromathicity.interfaces import Observer
 from chromathicity.util import SetGet
-
-
-class Observer(ABC):
-    """
-    A class to represent standard colorimetric observers
-
-    An observer defines the PSD of the cone response to light, x(l),
-    y(l), z(l), where l is the wavelength of light. These are known as the 
-    color matching functions, and can be used in conjunction with a specified 
-    illuminant to convert between various color spaces.
-
-    There are many pre-defined observers, including a custom observer that 
-    allows you to define your own color matching functions. The most common 
-    observer used will be the CIE Standard observer.
-    """
-
-    def __str__(self):
-        return self.name
-
-    @property
-    def name(self) -> str:
-        return self.__name__
-
-    @name.setter
-    def name(self, val):
-        raise_not_implemented(self, 'Setting name')
-
-    @property
-    @abstractmethod
-    def angle(self):
-        pass
-
-    @angle.setter
-    def angle(self, val):
-        raise_not_implemented(self, 'Setting angle')
-
-    @property
-    @abstractmethod
-    def year(self):
-        pass
-
-    @year.setter
-    def year(self, val):
-        raise_not_implemented(self, 'Setting year')
-
-    @property
-    @abstractmethod
-    def wavelengths(self) -> np.ndarray:
-        pass
-
-    @wavelengths.setter
-    def wavelengths(self, val):
-        raise_not_implemented(self, 'Setting wavelengths')
-
-    @property
-    @abstractmethod
-    def xbar(self):
-        pass
-
-    @xbar.setter
-    def xbar(self, x):
-        raise_not_implemented(self, 'Setting xbar')
-
-    @property
-    @abstractmethod
-    def ybar(self):
-        pass
-
-    @ybar.setter
-    def ybar(self, y):
-        raise_not_implemented(self, 'Setting ybar')
-
-    @property
-    @abstractmethod
-    def zbar(self) -> np.ndarray:
-        pass
-
-    @zbar.setter
-    def zbar(self, z):
-        raise_not_implemented(self, 'Setting zbar')
-
-    def get_xbar(self, wavelengths: np.ndarray) -> np.ndarray:
-        return interp1(wavelengths, self.wavelengths, self.xbar)
-
-    def get_ybar(self, wavelengths: np.ndarray) -> np.ndarray:
-        return interp1(wavelengths, self.wavelengths, self.ybar)
-
-    def get_zbar(self, wavelengths: np.ndarray) -> np.ndarray:
-        return interp1(wavelengths, self.wavelengths, self.zbar)
 
 
 class Standard(Observer):
@@ -983,5 +891,3 @@ class Custom(Observer, SetGet):
         self._zbar = z
 
 
-def get_default_observer():
-    return Standard()

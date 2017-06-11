@@ -1,28 +1,6 @@
-from abc import ABC, abstractmethod
-
 import numpy as np
 
-
-class ChromaticAdaptationAlgorithm(ABC):
-    """
-    Creates the linear transformations necessary when converting XYZ values 
-    between white points. 
-    """
-
-    def __repr__(self):
-        return f'{type(self).__name__}()'
-
-    def get_linear_transformation(self, white_point_from, white_point_to):
-        m_a = self.cone_response_domain
-        cone_response_from = white_point_from.reshape((1, 3)).dot(m_a).reshape(-1)
-        cone_response_to = white_point_to.reshape((1, 3)).dot(m_a).reshape(-1)
-        response_ratio = np.diag(cone_response_to / cone_response_from)
-        return np.linalg.solve(m_a.T, m_a.dot(response_ratio).T).T
-
-    @property
-    @abstractmethod
-    def cone_response_domain(self) -> np.ndarray:
-        pass
+from chromathicity.interfaces import ChromaticAdaptationAlgorithm
 
 
 class Bradford(ChromaticAdaptationAlgorithm):
@@ -65,5 +43,3 @@ class VonKries(ChromaticAdaptationAlgorithm):
             ])
 
 
-def get_default_chromatic_adaptation_algorithm():
-    return Bradford()

@@ -1,7 +1,8 @@
 import numpy as np
 from pytest import raises
 
-from chromathicity.rgbspec import RgbSpecification, Srgb
+from chromathicity.rgbspec import Srgb
+from chromathicity.interfaces import RgbSpecification
 
 
 class TestRgbSpecification:

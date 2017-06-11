@@ -1,7 +1,8 @@
 import numpy as np
 from pytest import raises
 
-from chromathicity.illuminant import Illuminant, D, A, CustomIlluminant
+from chromathicity.illuminant import D, A, CustomIlluminant
+from chromathicity.interfaces import Illuminant
 from chromathicity.observer import Standard
 
 

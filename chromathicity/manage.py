@@ -36,19 +36,15 @@ from abc import ABC, abstractmethod
 from functools import wraps
 from inspect import signature
 from logging import getLogger
-from typing import Union, Callable, List, Tuple, Dict, Any, Optional, Type, \
-    TYPE_CHECKING
+from typing import Callable, List
 
 import numpy as np
 from networkx import DiGraph, shortest_path, NetworkXNoPath
 
 from chromathicity.error import UndefinedConversionError, \
     UndefinedColorSpaceError
-from chromathicity.illuminant import Illuminant
-from chromathicity.observer import Observer
-from chromathicity.rgbspec import RgbSpecification
-from chromathicity.chromadapt import ChromaticAdaptationAlgorithm
-import chromathicity.spaces
+from chromathicity.interfaces import Illuminant, BareConversion, Conversion, \
+    ChromaticAdaptationAlgorithm, Observer, RgbSpecification
 
 logger = getLogger(__name__)
 
@@ -136,24 +132,6 @@ class DummyConversionManager(ConversionManager):
 
 
 _conversion_manager = GraphConversionManager()
-
-# A type variable for raw conversions before they are passed to the conversion
-# decorator.
-BareConversion = Callable[[np.ndarray, Any], np.ndarray]
-
-# After applying the color_conversion decorator, bare conversions will have the
-# following signature.
-Conversion = Callable[
-    [
-        np.ndarray,
-        Any,
-        Optional[int],
-        Optional[Illuminant],
-        Optional[Observer],
-        Optional[RgbSpecification],
-        Optional[ChromaticAdaptationAlgorithm]
-    ],
-    np.ndarray]
 
 
 def color_conversion(from_space_name: str, to_space_name: str) \

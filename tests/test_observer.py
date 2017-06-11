@@ -1,7 +1,8 @@
 from pytest import raises
 import numpy as np
 
-from chromathicity.observer import Observer, Standard
+from chromathicity.observer import Standard
+from chromathicity.interfaces import Observer
 
 
 class TestObserver:
