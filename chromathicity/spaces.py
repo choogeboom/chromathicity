@@ -48,7 +48,8 @@ class ColorSpaceData(ABC):
 
     __spacename__: str = ''
 
-    def get_data(self) -> np.ndarray:
+    @property
+    def data(self) -> np.ndarray:
         """
         The stored color data
 
@@ -60,6 +61,12 @@ class ColorSpaceData(ABC):
         is the same as::
 
             space[inds]"""
+        return self.get_data()
+
+    def get_data(self) -> np.ndarray:
+        """
+        Return the scaled and clipped data
+        """
         b_shape = [-1 if k == self.axis else 1
                    for k in range(self.raw_data.ndim)]
         min_value = np.array(self.min_value).reshape(b_shape)
@@ -67,27 +74,45 @@ class ColorSpaceData(ABC):
         d = np.clip(self.raw_data, min_value, max_value)
         return self.scale_factor * d if self.is_scaled else d
 
-    data: np.ndarray = lazy_property(get_data)
+    @property
+    def raw_data(self) -> np.ndarray:
+        """
+        The raw unscaled, un-clipped data. All conversions are done on this
+        value.
+
+        :return: the raw data 
+        """
+        return self.get_raw_data()
 
     @abstractmethod
     def get_raw_data(self) -> np.ndarray:
         """
-        The raw unscaled, un-clipped data. All conversions are done on this
-        value.
+        Return the raw unscaled, unclipped color data.
         
-        :return: the raw data 
+        Subclasses should override this method.
+        :return: 
         """
         pass
 
-    raw_data: np.ndarray = lazy_property(get_raw_data)
-
-    @abstractmethod
-    def get_axis(self) -> int:
+    @property
+    def axis(self) -> int:
         """
         The axis in the data array that the color components lie along.
         
         Changing the axis will permute the dimensions of the underlying
         array, so that the color space components lie along the new axis
+        """
+        return self.get_axis()
+
+    @axis.setter
+    def axis(self, a: int):
+        self.set_axis(a)
+
+    @abstractmethod
+    def get_axis(self) -> int:
+        """
+        Return the current data axis. Subclasses should override this method.
+        :return: 
         """
         pass
 
@@ -95,36 +120,54 @@ class ColorSpaceData(ABC):
     def set_axis(self, a: int):
         pass
 
-    axis: int = lazy_property(get_axis, set_axis)
-
-    @abstractmethod
-    def get_illuminant(self) -> Illuminant:
+    @property
+    def illuminant(self) -> Illuminant:
         """
         The illuminant. This combined with the 
         :py:attr:`~ColorSpaceData.observer` 
         determines the reference white point of the space."""
+        return self.get_illuminant()
+
+    @illuminant.setter
+    def illuminant(self, i: Illuminant):
+        self.set_illuminant(i)
+
+    @abstractmethod
+    def get_illuminant(self) -> Illuminant:
         pass
 
     @abstractmethod
     def set_illuminant(self, ill: Illuminant):
         pass
 
-    illuminant: Illuminant = lazy_property(get_illuminant, set_illuminant)
-
-    @abstractmethod
-    def get_observer(self) -> Observer:
+    @property
+    def observer(self) -> Observer:
         """
         The observer. This combined with the 
         :py:attr:`~ColorSpaceData.illuminant` 
         determines the reference white point of the space.
         """
+        return self.get_observer()
+
+    @observer.setter
+    def observer(self, o: Observer):
+        self.set_observer(o)
+
+    @abstractmethod
+    def get_observer(self) -> Observer:
         pass
 
     @abstractmethod
     def set_observer(self, obs: Observer):
         pass
 
-    observer: Observer = lazy_property(get_observer, set_observer)
+    @property
+    def rgbs(self) -> RgbSpecification:
+        return self.get_rgbs()
+
+    @rgbs.setter
+    def rgbs(self, r: RgbSpecification):
+        self.set_rgbs(r)
 
     @abstractmethod
     def get_rgbs(self) -> RgbSpecification:
@@ -137,7 +180,13 @@ class ColorSpaceData(ABC):
     def set_rgbs(self, r: RgbSpecification):
         pass
 
-    rgbs: RgbSpecification = lazy_property(get_rgbs, set_rgbs)
+    @property
+    def caa(self) -> ChromaticAdaptationAlgorithm:
+        return self.get_caa()
+
+    @caa.setter
+    def caa(self, c: ChromaticAdaptationAlgorithm):
+        self.set_caa(c)
 
     @abstractmethod
     def get_caa(self) -> ChromaticAdaptationAlgorithm:
@@ -150,7 +199,13 @@ class ColorSpaceData(ABC):
     def set_caa(self, c: ChromaticAdaptationAlgorithm):
         pass
 
-    caa: ChromaticAdaptationAlgorithm = lazy_property(get_caa, set_caa)
+    @property
+    def is_scaled(self) -> bool:
+        return self.get_is_scaled()
+
+    @is_scaled.setter
+    def is_scaled(self, s: bool):
+        self.set_is_scaled(s)
 
     @abstractmethod
     def get_is_scaled(self) -> bool:
@@ -166,9 +221,8 @@ class ColorSpaceData(ABC):
     def set_is_scaled(self, tf: bool):
         pass
 
-    is_scaled: bool = lazy_property(get_is_scaled, set_is_scaled)
-
-    def get_components(self) -> Tuple[np.ndarray, ...]:
+    @property
+    def components(self) -> Tuple[np.ndarray, ...]:
         """
         Tuple containing the correct slices of the data to get the 
         individual color space components. For example, in :class:`LabData`, 
@@ -180,22 +234,25 @@ class ColorSpaceData(ABC):
                    [ 75.]])
 
         """
+        return self.get_components()
+
+    def get_components(self) -> Tuple[np.ndarray, ...]:
         component_inds = construct_component_inds(self.axis,
                                                   self.data.ndim,
                                                   self.num_components,
                                                   min_ndims=0)
         return tuple(self[c] for c in component_inds)
 
-    components: Tuple[np.ndarray, ...] = lazy_property(get_components)
-
-    def get_num_components(self) -> int:
+    @property
+    def num_components(self) -> int:
         """
         :return: The number of components in the color space. For example 
            :class:`LabData` has three components: L*, a*, b*. 
         """
-        return 3
+        return self.get_num_components()
 
-    num_components: int = lazy_property(get_num_components)
+    def get_num_components(self) -> int:
+        return 3
 
     @abstractmethod
     def to(self, space: Union[str, type]) -> 'ColorSpaceData':
@@ -212,19 +269,21 @@ class ColorSpaceData(ABC):
         """
         pass
 
-    def get_kwargs(self) -> dict:
+    @property
+    def kwargs(self) -> dict:
         """
         The keyword arguments used to construct the object
         :return: 
         """
+        return self.get_kwargs()
+
+    def get_kwargs(self) -> dict:
         return {'axis': self.axis,
                 'illuminant': self.illuminant,
                 'observer': self.observer,
                 'rgbs': self.rgbs,
                 'caa': self.caa,
                 'is_scaled': self.is_scaled}
-
-    kwargs: dict = property(get_kwargs)
 
     def __array__(self, dtype) -> np.ndarray:
         if dtype == self.data.dtype:
