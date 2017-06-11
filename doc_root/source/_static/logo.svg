@@ -16,7 +16,10 @@
    version="1.1"
    inkscape:version="0.91 r13725"
    sodipodi:docname="logo.svg"
-   style="enable-background:new">
+   style="enable-background:new"
+   inkscape:export-filename="/home/choogeboom/PycharmProjects/chromathicity/doc_root/source/_static/logo.svg.png"
+   inkscape:export-xdpi="32.547947"
+   inkscape:export-ydpi="32.547947">
   <defs
      id="defs4">
     <filter
@@ -239,9 +242,9 @@
      borderopacity="1.0"
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
-     inkscape:zoom="0.7"
-     inkscape:cx="-62.624022"
-     inkscape:cy="83.563286"
+     inkscape:zoom="1.4"
+     inkscape:cx="115.06941"
+     inkscape:cy="172.95068"
      inkscape:document-units="px"
      inkscape:current-layer="layer3"
      showgrid="false"

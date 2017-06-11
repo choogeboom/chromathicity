@@ -115,7 +115,7 @@
 <h2>Basic Interface<a class="headerlink" href="#basic-interface" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
 <dt id="chromathicity.spaces.ColorSpaceData">
-<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">ColorSpaceData</code><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">ColorSpaceData</code><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData" title="Permalink to this definition">¶</a></dt>
 <dd><p>Defines the main interface for all color space data classes. 
 <code class="xref py py-class docutils literal"><span class="pre">ColorSpaceDataImpl</span></code> provides a full implementation of this 
 interface, which makes it much easier to define custom color spaces.</p>
@@ -125,49 +125,6 @@ in subclasses.</p>
 <dl class="attribute">
 <dt id="chromathicity.spaces.ColorSpaceData.axis">
 <code class="descname">axis</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.axis" title="Permalink to this definition">¶</a></dt>
-<dd><p>The axis in the data array that the color components lie along.</p>
-<p>Changing the axis will permute the dimensions of the underlying
-array, so that the color space components lie along the new axis</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="chromathicity.spaces.ColorSpaceData.caa">
-<code class="descname">caa</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.caa" title="Permalink to this definition">¶</a></dt>
-<dd><p>The chromatic adaptation algorithm.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="chromathicity.spaces.ColorSpaceData.components">
-<code class="descname">components</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.components" title="Permalink to this definition">¶</a></dt>
-<dd><p>Tuple containing the correct slices of the data to get the 
-individual color space components. For example, in <code class="xref py py-class docutils literal"><span class="pre">LabData</span></code>, 
-this property would contain <code class="docutils literal"><span class="pre">(L*,</span> <span class="pre">a*,</span> <span class="pre">b*)</span></code>.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([[</span><span class="mf">50.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">],</span> <span class="p">[</span><span class="mf">75.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">60.</span><span class="p">]])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="go">array([[ 50.],</span>
-<span class="go">       [ 75.]])</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="chromathicity.spaces.ColorSpaceData.data">
-<code class="descname">data</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.data" title="Permalink to this definition">¶</a></dt>
-<dd><p>The stored color data</p>
-<p>Indexing into the space data instance is equivalent to indexing into 
-the data itself:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">space</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span>
-</pre></div>
-</div>
-<p>is the same as:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">space</span><span class="p">[</span><span class="n">inds</span><span class="p">]</span>
-</pre></div>
-</div>
-</dd></dl>
-
-<dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_axis">
-<code class="descname">get_axis</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_axis" title="Permalink to this definition">¶</a></dt>
 <dd><p>The axis in the data array that the color components lie along.</p>
 <p>Changing the axis will permute the dimensions of the underlying
 array, so that the color space components lie along the new axis</p>
@@ -181,27 +138,14 @@ array, so that the color space components lie along the new axis</p>
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_caa">
-<code class="descname">get_caa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_caa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_caa" title="Permalink to this definition">¶</a></dt>
-<dd><p>The chromatic adaptation algorithm.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ChromaticAdaptationAlgorithm</span></code></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_components">
-<code class="descname">get_components</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_components"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_components" title="Permalink to this definition">¶</a></dt>
+<dl class="attribute">
+<dt id="chromathicity.spaces.ColorSpaceData.components">
+<code class="descname">components</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.components" title="Permalink to this definition">¶</a></dt>
 <dd><p>Tuple containing the correct slices of the data to get the 
 individual color space components. For example, in <code class="xref py py-class docutils literal"><span class="pre">LabData</span></code>, 
 this property would contain <code class="docutils literal"><span class="pre">(L*,</span> <span class="pre">a*,</span> <span class="pre">b*)</span></code>.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([[</span><span class="mf">50.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">],</span> <span class="p">[</span><span class="mf">75.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">60.</span><span class="p">]])</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">chromathicity.spaces</span> <span class="k">import</span> <span class="n">LabData</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([[</span><span class="mf">50.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">],</span> <span class="p">[</span><span class="mf">75.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">60.</span><span class="p">]])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span><span class="o">.</span><span class="n">components</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 <span class="go">array([[ 50.],</span>
 <span class="go">       [ 75.]])</span>
@@ -217,9 +161,9 @@ this property would contain <code class="docutils literal"><span class="pre">(L*
 </table>
 </dd></dl>
 
-<dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_data">
-<code class="descname">get_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_data" title="Permalink to this definition">¶</a></dt>
+<dl class="attribute">
+<dt id="chromathicity.spaces.ColorSpaceData.data">
+<code class="descname">data</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.data" title="Permalink to this definition">¶</a></dt>
 <dd><p>The stored color data</p>
 <p>Indexing into the space data instance is equivalent to indexing into 
 the data itself:</p>
@@ -241,16 +185,36 @@ the data itself:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_illuminant">
-<code class="descname">get_illuminant</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_illuminant"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_illuminant" title="Permalink to this definition">¶</a></dt>
-<dd><p>The illuminant. This combined with the 
-<code class="xref py py-attr docutils literal"><span class="pre">observer</span></code> 
-determines the reference white point of the space.</p>
+<dt id="chromathicity.spaces.ColorSpaceData.get_axis">
+<code class="descname">get_axis</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData.get_axis"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_axis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the current data axis. Subclasses should override this method.
+:rtype: <a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a>
+:return:</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="chromathicity.spaces.ColorSpaceData.get_caa">
+<code class="descname">get_caa</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData.get_caa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_caa" title="Permalink to this definition">¶</a></dt>
+<dd><p>The chromatic adaptation algorithm.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Illuminant</span></code></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ChromaticAdaptationAlgorithm</span></code></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="chromathicity.spaces.ColorSpaceData.get_data">
+<code class="descname">get_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData.get_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the scaled and clipped data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code></td>
 </tr>
 </tbody>
 </table>
@@ -258,7 +222,7 @@ determines the reference white point of the space.</p>
 
 <dl class="method">
 <dt id="chromathicity.spaces.ColorSpaceData.get_is_scaled">
-<code class="descname">get_is_scaled</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_is_scaled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_is_scaled" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_is_scaled</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData.get_is_scaled"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_is_scaled" title="Permalink to this definition">¶</a></dt>
 <dd><p>Whether the data is scaled</p>
 <p>If set to <code class="docutils literal"><span class="pre">True</span></code>, then the data is scaled by the scale factor of the
 space.</p>
@@ -273,65 +237,17 @@ space.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_kwargs">
-<code class="descname">get_kwargs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_kwargs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_kwargs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The keyword arguments used to construct the object
-:rtype: <a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a>
+<dt id="chromathicity.spaces.ColorSpaceData.get_raw_data">
+<code class="descname">get_raw_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData.get_raw_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_raw_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the raw unscaled, unclipped color data.</p>
+<p>Subclasses should override this method.
+:rtype: <code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>
 :return:</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_num_components">
-<code class="descname">get_num_components</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_num_components"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_num_components" title="Permalink to this definition">¶</a></dt>
-<dd><table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a></td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The number of components in the color space. For example 
-<code class="xref py py-class docutils literal"><span class="pre">LabData</span></code> has three components: L*, a*, b*.</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_observer">
-<code class="descname">get_observer</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_observer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_observer" title="Permalink to this definition">¶</a></dt>
-<dd><p>The observer. This combined with the 
-<code class="xref py py-attr docutils literal"><span class="pre">illuminant</span></code> 
-determines the reference white point of the space.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Observer</span></code></td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
-<dt id="chromathicity.spaces.ColorSpaceData.get_raw_data">
-<code class="descname">get_raw_data</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_raw_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_raw_data" title="Permalink to this definition">¶</a></dt>
-<dd><p>The raw unscaled, un-clipped data. All conversions are done on this
-value.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code></td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the raw data</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="method">
 <dt id="chromathicity.spaces.ColorSpaceData.get_rgbs">
-<code class="descname">get_rgbs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.get_rgbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_rgbs" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_rgbs</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData.get_rgbs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.get_rgbs" title="Permalink to this definition">¶</a></dt>
 <dd><p>The RGB color space specification.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -349,14 +265,14 @@ value.</p>
 <dd><p>The illuminant. This combined with the 
 <code class="xref py py-attr docutils literal"><span class="pre">observer</span></code> 
 determines the reference white point of the space.</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="chromathicity.spaces.ColorSpaceData.is_scaled">
-<code class="descname">is_scaled</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.is_scaled" title="Permalink to this definition">¶</a></dt>
-<dd><p>Whether the data is scaled</p>
-<p>If set to <code class="docutils literal"><span class="pre">True</span></code>, then the data is scaled by the scale factor of the
-space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Illuminant</span></code></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -374,7 +290,9 @@ space.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The number of components in the color space. For example 
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.python.org/2/library/functions.html#int" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">int</span></code></a></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">The number of components in the color space. For example 
 <code class="xref py py-class docutils literal"><span class="pre">LabData</span></code> has three components: L*, a*, b*.</td>
 </tr>
 </tbody>
@@ -387,6 +305,14 @@ space.</p>
 <dd><p>The observer. This combined with the 
 <code class="xref py py-attr docutils literal"><span class="pre">illuminant</span></code> 
 determines the reference white point of the space.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">Observer</span></code></td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -398,23 +324,20 @@ value.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">the raw data</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code></td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">the raw data</td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
-<dl class="attribute">
-<dt id="chromathicity.spaces.ColorSpaceData.rgbs">
-<code class="descname">rgbs</code><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.rgbs" title="Permalink to this definition">¶</a></dt>
-<dd><p>The RGB color space specification.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="chromathicity.spaces.ColorSpaceData.to">
-<code class="descname">to</code><span class="sig-paren">(</span><em>space</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceData.to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.to" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to</code><span class="sig-paren">(</span><em>space</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/interfaces.html#ColorSpaceData.to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceData.to" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert this space to another space.:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([</span><span class="mf">50.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">])</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span> <span class="nn">chromathicity.spaces</span> <span class="k">import</span> <span class="n">LabData</span><span class="p">,</span> <span class="n">XyzData</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">lab</span> <span class="o">=</span> <span class="n">LabData</span><span class="p">([</span><span class="mf">50.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">,</span> <span class="mf">25.</span><span class="p">])</span>
 <span class="gp">&gt;&gt;&gt; </span><span class="n">xyz</span> <span class="o">=</span> <span class="n">lab</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">XyzData</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -425,7 +348,7 @@ value.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>space</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#str" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/2/library/functions.html#type" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">type</span></code></a>]) &#8211; either the name or the class of the destination color 
 space.</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></a></td>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body">The new color space data</td>
 </tr>
@@ -450,7 +373,7 @@ wavelengths of the spectra.</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>data</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal"><span class="pre">Any</span></code>], <a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></a>]) &#8211; The spectral data [reflectance].</li>
+<li><strong>data</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal"><span class="pre">Any</span></code>], <code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code>]) &#8211; The spectral data [reflectance].</li>
 <li><strong>wavelengths</strong> (<code class="xref py py-data docutils literal"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ndarray</span></code>, <code class="xref py py-class docutils literal"><span class="pre">Iterable</span></code>[<a class="reference external" href="https://docs.python.org/2/library/functions.html#float" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">float</span></code></a>]]) &#8211; The wavelengths that correspond to the spectra.</li>
 <li><strong>axis</strong> &#8211; The axis along which the spectra lie.</li>
 <li><strong>illuminant</strong> (<em>Illuminant</em>) &#8211; The illuminant</li>
@@ -618,7 +541,7 @@ name of the color space.</p>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-data docutils literal"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal"><span class="pre">Type</span></code>[<a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></a>]], <code class="xref py py-class docutils literal"><span class="pre">Type</span></code>[<a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code></a>]]</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><code class="xref py py-data docutils literal"><span class="pre">Callable</span></code>[[<code class="xref py py-class docutils literal"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code>]], <code class="xref py py-class docutils literal"><span class="pre">Type</span></code>[<code class="xref py py-class docutils literal"><span class="pre">ColorSpaceData</span></code>]]</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body">decorator that returns the class after registering it</td>
 </tr>
@@ -638,7 +561,7 @@ classes, which take care of many implementation details.</p>
 <dl class="class">
 <dt id="chromathicity.spaces.ColorSpaceDataImpl">
 <em class="property">class </em><code class="descclassname">chromathicity.spaces.</code><code class="descname">ColorSpaceDataImpl</code><span class="sig-paren">(</span><em>data</em>, <em>*</em>, <em>axis=None</em>, <em>illuminant=D(6504)</em>, <em>observer=Standard(2)</em>, <em>rgbs=Srgb()</em>, <em>caa=Bradford()</em>, <em>is_scaled=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/chromathicity/spaces.html#ColorSpaceDataImpl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#chromathicity.spaces.ColorSpaceDataImpl" title="Permalink to this definition">¶</a></dt>
-<dd><p>Bases: <a class="reference internal" href="#chromathicity.spaces.ColorSpaceData" title="chromathicity.spaces.ColorSpaceData"><code class="xref py py-class docutils literal"><span class="pre">chromathicity.spaces.ColorSpaceData</span></code></a>, <code class="xref py py-class docutils literal"><span class="pre">chromathicity.util.SetGet</span></code></p>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">chromathicity.interfaces.ColorSpaceData</span></code>, <code class="xref py py-class docutils literal"><span class="pre">chromathicity.util.SetGet</span></code></p>
 <p>A full implementation of the <code class="xref py py-class docutils literal"><span class="pre">ColorSpaceDataBase</span></code> interface, with 
 internal storage for the data.</p>
 <table class="docutils field-list" frame="void" rules="none">
